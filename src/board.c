@@ -253,7 +253,7 @@ void startBoard(struct Board *board) {
     board->castling = 0b1111;
 }
 char getChar(int square, struct Board *board) {
-    unsigned long long mask = 1L << square;
+    unsigned long long mask = 1ULL << square;
     if (!(mask & (board->white_pieces | board->black_pieces)))
         return '-';
     char letter;

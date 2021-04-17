@@ -1,11 +1,11 @@
 //
 // Created by Dominic Reed on 4/15/21.
 //
-
+#include "stdint.h"
 #ifndef UNTITLED_BITUTIL_H
 #define UNTITLED_BITUTIL_H
-#define bb unsigned long long
-#define BIT(sq) (1L << (sq))
+#define bb uint64_t
+#define BIT(sq) (1ULL << (sq))
 #define LSB(x) (__builtin_ctzll(x))
 #define MSB(x) (63 - __builtin_clzll(x))
 #define BITS(x) (__builtin_popcountll(x))
