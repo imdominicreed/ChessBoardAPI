@@ -9,10 +9,7 @@ static bb knight_mask[64];
 static bb king_mask[64];
 static bb bishop_mask[64];
 static bb rook_mask[64];
-bb secondRow(bb location);
-bb seventhRow(bb location);
-bb firstColumn(bb location);
-bb lastColumn(bb location);
+
 // i really cant explain magic bit boards its literal magic these values were taken off of chess progamming
 static const bb rookMagics[64] = {
         0xa8002c000108020ULL, 0x6c00049b0002001ULL, 0x100200010090040ULL, 0x2480041000800801ULL, 0x280028004000800ULL,
