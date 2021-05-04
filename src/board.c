@@ -188,6 +188,7 @@ void emptySquare(unsigned long long mask, struct Board *board) {
     board->rooks &= ~mask;
     board->pawns &= ~mask;
     board->bishops &= ~mask;
+    board->knights &= ~mask;
 }
 void movePiece(unsigned long long *board, int from, int to) {
     *board ^= 1ULL << from;

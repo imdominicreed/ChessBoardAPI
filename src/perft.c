@@ -61,7 +61,11 @@ void perftIO() {
     long long nodes = perft(board, depth-1);
     t =  clock()-t;
     double nodes_per_second = nodes / (((double) t) / CLOCKS_PER_SEC);
-    printf("nodes per second: %f", nodes_per_second);
+    printf("total nodes: %u nodes per second: %f", nodes, nodes_per_second);
+
+}
+int main() {
+    perftIO();
 }
 
 

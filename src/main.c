@@ -3,6 +3,7 @@
 //
 #include "engine.h"
 #include "board.h"
+
 int check_if_legal(struct Move move, struct Board board) {
     struct Move move_list[128];
     int num_moves = getMoveList(&board, move_list);
@@ -14,6 +15,8 @@ int check_if_legal(struct Move move, struct Board board) {
 }
 
 int main() {
+
+    setbuf(stdout, 0);
     struct Board board;
     startBoard(&board);
     struct Move move_list[128];
@@ -34,6 +37,6 @@ int main() {
         struct Move engine = get_best_move(&board, 5);
         board = doMove(&engine , board);
         num_moves = getMoveList(&board, move_list);
-        printBoard(&board);
+        printMove(&engine);
     }
 }
