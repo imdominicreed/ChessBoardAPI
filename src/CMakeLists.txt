@@ -3,4 +3,4 @@ project(untitled C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(untitled main.c board.c move.c board.h magic.h magic.c rays.c rays.h bitutil.h)
+add_executable(untitled perft.c board.c move.c board.h magic.h magic.c rays.c rays.h bitutil.h engine.c main.c engine.h)

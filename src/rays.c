@@ -5,9 +5,6 @@
 #include "bitutil.h"
 unsigned long long RAYS[8][64];
 
-
-
-
  bb west(bb mask, int shift) {
     bb attacks = 0;
     shift(mask, shift);

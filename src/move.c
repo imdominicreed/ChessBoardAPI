@@ -8,6 +8,7 @@ inline struct Move makeMove(int from, int to, int type) {
     struct Move move;
     move.from = from;
     move.to = to;
+    move.promo = type;
     return move;
 }
 char get_char(int location) {
