@@ -42,7 +42,6 @@ void startBoard(struct Board *board);
 struct Move makeMove(int from, int to, int type);
 int getMoveList(struct Board *board, struct Move move_list[]);
 void printMove(struct Move *move);
-int notAMove(struct Move *move);
 struct Board doMove(struct Move *move, struct Board board);
 int cmpMove(const void * a, const void * b);
 void printMoveList(struct Board board, int sorted);

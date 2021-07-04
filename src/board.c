@@ -106,7 +106,7 @@ bb get_white_pawn_moves(bb pieces, bb opp_pieces, struct Move move_list[],  int 
     return attacks;
 }
 void getCastlingMoveList(struct Board *board, struct Move move_list[],  int index, int *moveIndex) {
-    int castleBit = board->white ? 0 : 4;
+    int castleBit = board->white ? 1 : 4;
     unsigned long long mask = 1ULL << index;
     unsigned long long pieces = board->black_pieces | board->white_pieces;
     if (castleBit & board->castling) {
@@ -199,9 +199,9 @@ struct Board doMove(struct Move *move, struct Board board) {
     unsigned long long to = 1ULL << move->to;
     bb *pieces = board.white ? &board.white_pieces : &board.black_pieces;
     if ((getKing(&board, board.white) & from) && (move->from-move->to == 2 || move->from-move->to == -2)) {
-        movePiece(board.white ? &board.white_pieces : &board.black_pieces, move->from, move->to);
-        movePiece(&board.rooks, (move->to % 8 >4) ? 8 : 0, move->to + ((move->to % 8 >4) ? 1 : -1));
-        movePiece(board.white ? &board.white_pieces : &board.black_pieces, (move->to % 8 >4) ? 8 : 0, move->to + ((move->to % 8 >4) ? 1 : -1));
+        movePiece(pieces, move->from, move->to);
+        movePiece(&board.rooks, (move->to % 8 >4) ? 7 : 0, move->to + ((move->to % 8 >4) ? 1 : -1));
+        movePiece(pieces, (move->to % 8 >4) ? 7 : 0, move->to + ((move->to % 8 >4) ? 1 : -1));
         return board;
     }
     emptySquare(to, &board);

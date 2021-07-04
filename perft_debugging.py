@@ -37,4 +37,4 @@ def search_for_bug(program1, program2, position, depth):
         search_for_bug(program1, program2, f"{position} {move}", depth-1)
         return
 
-search_for_bug("/Users/dominicreed/CLionProjects/untitled/src/a.out", "stockfish", "startpos moves", 8)
+search_for_bug("/Users/dominicreed/CLionProjects/untitled/src/a.out", "stockfish", "startpos moves", 5)
