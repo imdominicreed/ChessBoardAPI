@@ -4,24 +4,26 @@
 #include "board.h"
 #include "bitutil.h"
 #include "magic.h"
-bb getKing(struct Board *board, int white) {
+
+
+bb getKing(Board *board, int white) {
     unsigned long long pieces = board->black_pieces | board->white_pieces;
     pieces &= ~( board->pawns | board->bishops | board->rooks | board->knights);
     pieces &= ~(!white ? board->white_pieces : board->black_pieces);
     return  pieces;
 }
 
-void single_promo(struct Move move_list[],int src, int dst, int *moveIndex, int type) {
-    move_list[*moveIndex] = makeMove(src, dst, type);
+void single_promo(Move move_list[],int src, int dst, int *moveIndex, int type) {
+    move_list[*moveIndex] = make_move(src, dst, type);
     ++*moveIndex;
 }
-void promote_pawn_moves(struct Move move_list[],int src, int dst, int *moveIndex) {
+void promote_pawn_moves(Move move_list[],int src, int dst, int *moveIndex) {
     single_promo(move_list, src, dst, moveIndex, QUEEN_PROMO);
     single_promo(move_list, src, dst, moveIndex, KNIGHT_PROMO);
     single_promo(move_list, src, dst, moveIndex, ROOK_PROMO);
     single_promo(move_list, src, dst, moveIndex, BISHOP_PROMO);
 }
-bb get_black_pawn_moves(bb pieces, bb opp_pieces, struct Move move_list[],  int src, int *moveIndex) {
+bb get_black_pawn_moves(bb pieces, bb opp_pieces, Move move_list[],  int src, int *moveIndex) {
     bb mask = 1ULL << src;
     bb attacks = 0;
     bb attack = mask;
@@ -31,7 +33,7 @@ bb get_black_pawn_moves(bb pieces, bb opp_pieces, struct Move move_list[],  int 
         if (last_first_row & attack)
             promote_pawn_moves(move_list, src, src - 7, moveIndex);
         else {
-            move_list[*moveIndex] = makeMove(src, src - 7, NORMAL_MOVE);
+            move_list[*moveIndex] = make_move(src, src - 7, NORMAL_MOVE);
             ++*moveIndex;
             attacks |= attack;
         }
@@ -42,7 +44,7 @@ bb get_black_pawn_moves(bb pieces, bb opp_pieces, struct Move move_list[],  int 
         if (last_first_row & attack)
             promote_pawn_moves(move_list, src, src - 9, moveIndex);
         else {
-            move_list[*moveIndex] = makeMove(src, src - 9, NORMAL_MOVE);
+            move_list[*moveIndex] = make_move(src, src - 9, NORMAL_MOVE);
             ++*moveIndex;
             attacks |= attack;
         }
@@ -52,18 +54,18 @@ bb get_black_pawn_moves(bb pieces, bb opp_pieces, struct Move move_list[],  int 
         if (last_first_row & attack)
             promote_pawn_moves(move_list, src, src - 8, moveIndex);
         else {
-            move_list[*moveIndex] = makeMove(src, src - 8, NORMAL_MOVE);
+            move_list[*moveIndex] = make_move(src, src - 8, NORMAL_MOVE);
             ++*moveIndex;
             attack >>= 8;
             if ((mask & SEVENTH_ROW) && !(attack & pieces)) {
-                move_list[*moveIndex] = makeMove(src, src - 16, NORMAL_MOVE);
+                move_list[*moveIndex] = make_move(src, src - 16, NORMAL_MOVE);
                 ++*moveIndex;
             }
         }
     }
     return attacks;
 }
-bb get_white_pawn_moves(bb pieces, bb opp_pieces, struct Move move_list[],  int src, int *moveIndex) {
+bb get_white_pawn_moves(bb pieces, bb opp_pieces, Move move_list[],  int src, int *moveIndex) {
     bb mask = 1ULL << src;
     bb attacks = 0;
     bb attack = mask;
@@ -73,7 +75,7 @@ bb get_white_pawn_moves(bb pieces, bb opp_pieces, struct Move move_list[],  int 
         if (last_first_row & attack)
             promote_pawn_moves(move_list, src, src + 7, moveIndex);
         else {
-            move_list[*moveIndex] = makeMove(src, src + 7, NORMAL_MOVE);
+            move_list[*moveIndex] = make_move(src, src + 7, NORMAL_MOVE);
             ++*moveIndex;
             attacks |= attack;
         }
@@ -84,7 +86,7 @@ bb get_white_pawn_moves(bb pieces, bb opp_pieces, struct Move move_list[],  int 
         if (last_first_row & attack)
             promote_pawn_moves(move_list, src, src + 9, moveIndex);
         else {
-            move_list[*moveIndex] = makeMove(src, src + 9, NORMAL_MOVE);
+            move_list[*moveIndex] = make_move(src, src + 9, NORMAL_MOVE);
             ++*moveIndex;
             attacks |= attack;
         }
@@ -94,47 +96,47 @@ bb get_white_pawn_moves(bb pieces, bb opp_pieces, struct Move move_list[],  int 
         if (last_first_row & attack)
             promote_pawn_moves(move_list, src, src + 8, moveIndex);
         else {
-            move_list[*moveIndex] = makeMove(src, src + 8, NORMAL_MOVE);
+            move_list[*moveIndex] = make_move(src, src + 8, NORMAL_MOVE);
             ++*moveIndex;
             attack <<= 8;
             if ((mask & SECOND_ROW) && !(attack & pieces)) {
-                move_list[*moveIndex] = makeMove(src, src + 16, NORMAL_MOVE);
+                move_list[*moveIndex] = make_move(src, src + 16, NORMAL_MOVE);
                 ++*moveIndex;
             }
         }
     }
     return attacks;
 }
-void getCastlingMoveList(struct Board *board, struct Move move_list[],  int index, int *moveIndex) {
+void get_castling_moves(Board *board, Move *move_list, int index, int *moveIndex) {
     int castleBit = board->white ? 1 : 4;
     unsigned long long mask = 1ULL << index;
     unsigned long long pieces = board->black_pieces | board->white_pieces;
     if (castleBit & board->castling) {
         if (!((mask <<1) & pieces) && !((mask <<2) & pieces)) {
-            move_list[*moveIndex] = makeMove(index, index+2, CASTLING);
+            move_list[*moveIndex] = make_move(index, index + 2, CASTLING);
             ++*moveIndex;
         }
     }
     castleBit<<=1;
     if (castleBit & board->castling) {
         if (!((mask >>1) & pieces) && !((mask >>2) & pieces) && !((mask >>3) & pieces)) {
-            move_list[*moveIndex] =  makeMove(index, index-2, CASTLING);;
+            move_list[*moveIndex] = make_move(index, index - 2, CASTLING);;
             ++*moveIndex;
         }
     }
 }
-int get_moves(struct Move move_list[],  bb attacks, int src, int *moveIndex) {
+int get_moves(Move move_list[],  bb attacks, int src, int *moveIndex) {
     int dst;
     while (attacks){
         POP_BSF(dst, attacks);
-        move_list[*moveIndex] =  makeMove(src, dst, NORMAL_MOVE);
+        move_list[*moveIndex] = make_move(src, dst, NORMAL_MOVE);
         ++*moveIndex;
     }
     return 1;
 }
 
 
-int getMoveList(struct Board *board, struct Move move_list[]) {
+int get_move_list(Board *board, Move *move_list) {
     //implement promotion, castling, and checks
     if (!getKing(board, board->white))return 0;
     bb all_pieces = board->white_pieces | board->black_pieces;
@@ -178,11 +180,11 @@ int getMoveList(struct Board *board, struct Move move_list[]) {
     bb mask =~mypieces &  get_king_attacks(src);
     if (mask & king) return 0;
     get_moves(move_list,mask, src, &list_index);
-    getCastlingMoveList(board, move_list, src, &list_index);
+    get_castling_moves(board, move_list, src, &list_index);
     return list_index;
 }
 
-void emptySquare(unsigned long long mask, struct Board *board) {
+void make_empty_square(unsigned long long mask, Board *board) {
     board->white_pieces &= ~mask;
     board->black_pieces &= ~mask;
     board->rooks &= ~mask;
@@ -190,33 +192,33 @@ void emptySquare(unsigned long long mask, struct Board *board) {
     board->bishops &= ~mask;
     board->knights &= ~mask;
 }
-void movePiece(unsigned long long *board, int from, int to) {
+void move_piece(unsigned long long *board, int from, int to) {
     *board ^= 1ULL << from;
     *board ^= 1ULL << to;
 }
-struct Board doMove(struct Move *move, struct Board board) {
+Board do_move(Move *move, Board board) {
     unsigned long long from = 1ULL << move->from;
     unsigned long long to = 1ULL << move->to;
     bb *pieces = board.white ? &board.white_pieces : &board.black_pieces;
     if ((getKing(&board, board.white) & from) && (move->from-move->to == 2 || move->from-move->to == -2)) {
-        movePiece(pieces, move->from, move->to);
-        movePiece(&board.rooks, (move->to % 8 >4) ? 7 : 0, move->to + ((move->to % 8 >4) ? 1 : -1));
-        movePiece(pieces, (move->to % 8 >4) ? 7 : 0, move->to + ((move->to % 8 >4) ? 1 : -1));
+        move_piece(pieces, move->from, move->to);
+        move_piece(&board.rooks, (move->to % 8 > 4) ? 7 : 0, move->to + ((move->to % 8 > 4) ? 1 : -1));
+        move_piece(pieces, (move->to % 8 > 4) ? 7 : 0, move->to + ((move->to % 8 > 4) ? 1 : -1));
         return board;
     }
-    emptySquare(to, &board);
-    movePiece(board.white ? &board.white_pieces : &board.black_pieces, move->from, move->to);
+    make_empty_square(to, &board);
+    move_piece(board.white ? &board.white_pieces : &board.black_pieces, move->from, move->to);
     if (from & board.rooks) {
-        movePiece(&board.rooks, move->from, move->to);
+        move_piece(&board.rooks, move->from, move->to);
         int castling = 1<< (((from %8) < 4) ? 1 : 2);
         castling <<= board.white ? 0 : 2;
         board.castling &= ~castling;
     }
     if (from & board.bishops) {
-        movePiece(&board.bishops, move->from, move->to);
+        move_piece(&board.bishops, move->from, move->to);
     }
     if (from & board.pawns) {
-        emptySquare(from, &board);
+        make_empty_square(from, &board);
         switch (move->promo) {
             case QUEEN_PROMO:
                 *pieces |= to;
@@ -242,7 +244,7 @@ struct Board doMove(struct Move *move, struct Board board) {
         }
     }
     if (from & board.knights) {
-        movePiece(&board.knights, move->from, move->to);
+        move_piece(&board.knights, move->from, move->to);
     }
     board.white = !board.white;
     return board;
@@ -251,7 +253,7 @@ void mirror(bb *board, int shift) {
     *board |= (*board << shift);
 }
 
-void startBoard(struct Board *board) {
+void start_board(Board *board) {
     init_tables();
     board->rooks = 0b10001001;
     mirror(&board->rooks, 56);
@@ -266,7 +268,7 @@ void startBoard(struct Board *board) {
     board->white = true;
     board->castling = 0b1111;
 }
-char getChar(int square, struct Board *board) {
+char get_char_sq(int square, Board *board) {
     unsigned long long mask = 1ULL << square;
     if (!(mask & (board->white_pieces | board->black_pieces)))
         return '-';
@@ -287,11 +289,11 @@ char getChar(int square, struct Board *board) {
      letter -= 32;
     return letter;
 }
-void printBoard(struct Board *board) {
+void printBoard(Board *board) {
     for (int i = 0; i < 64; ++i) {
         if (!(i % 8))
             printf("\n");
-        printf("%c ", getChar(i, board));
+        printf("%c ", get_char_sq(i, board));
     }
     printf("\n");
 }

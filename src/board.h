@@ -19,7 +19,7 @@ enum  {
     LONG_CASTLE = 2, SHORT_CASTLE = 1, BLACK = 2
 };
 
-struct Board {
+typedef struct {
     unsigned long long pawns;
     unsigned long long bishops;
     unsigned long long rooks;
@@ -29,21 +29,21 @@ struct Board {
     int en_passant;
     int castling;
     bool white;
-};
-struct Move{
+} Board;
+typedef struct {
     int from;
     int to;
     int promo;
-};
+} Move;
 
-struct Move moveFromString(char string[4]);
-void printBoard(struct Board *board);
-void startBoard(struct Board *board);
-struct Move makeMove(int from, int to, int type);
-int getMoveList(struct Board *board, struct Move move_list[]);
-void printMove(struct Move *move);
-struct Board doMove(struct Move *move, struct Board board);
-int cmpMove(const void * a, const void * b);
-void printMoveList(struct Board board, int sorted);
+Move move_to_str(char *string);
+void printBoard(Board *board);
+void start_board(Board *board);
+Move make_move(int from, int to, int type);
+int get_move_list(Board *board, Move *move_list);
+void print_move(Move *move);
+Board do_move(Move *move, Board board);
+int cmp_move(const void * a, const void * b);
+void print_move_list(Board board, int sorted);
 
 #endif //UNTITLED_BOARD_H

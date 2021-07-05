@@ -10,8 +10,7 @@ static bb king_mask[64];
 static bb bishop_mask[64];
 static bb rook_mask[64];
 
-// i really cant explain magic bit boards its literal magic these values were taken off of chess progamming
-static const bb rookMagics[64] = {
+static const bb ROOK_MAGIC[64] = {
         0xa8002c000108020ULL, 0x6c00049b0002001ULL, 0x100200010090040ULL, 0x2480041000800801ULL, 0x280028004000800ULL,
         0x900410008040022ULL, 0x280020001001080ULL, 0x2880002041000080ULL, 0xa000800080400034ULL, 0x4808020004000ULL,
         0x2290802004801000ULL, 0x411000d00100020ULL, 0x402800800040080ULL, 0xb000401004208ULL, 0x2409000100040200ULL,
@@ -27,7 +26,7 @@ static const bb rookMagics[64] = {
         0x489a000810200402ULL, 0x1004400080a13ULL, 0x4000011008020084ULL, 0x26002114058042ULL
 };
 
-static const bb bishopMagics[64] = {
+static const bb BISHOP_MAGIC[64] = {
         0x89a1121896040240ULL, 0x2004844802002010ULL, 0x2068080051921000ULL, 0x62880a0220200808ULL, 0x4042004000000ULL,
         0x100822020200011ULL, 0xc00444222012000aULL, 0x28808801216001ULL, 0x400492088408100ULL, 0x201c401040c0084ULL,
         0x840800910a0010ULL, 0x82080240060ULL, 0x2000840504006000ULL, 0x30010c4108405004ULL, 0x1008005410080802ULL,
@@ -42,7 +41,7 @@ static const bb bishopMagics[64] = {
         0x822088220820214ULL, 0x40808090012004ULL, 0x910224040218c9ULL, 0x402814422015008ULL, 0x90014004842410ULL,
         0x1000042304105ULL, 0x10008830412a00ULL, 0x2520081090008908ULL, 0x40102000a0a60140ULL,
 };
-static const int rookIndexBits[64] = {
+static const int ROOK_INDEX_BITS[64] = {
         12, 11, 11, 11, 11, 11, 11, 12,
         11, 10, 10, 10, 10, 10, 10, 11,
         11, 10, 10, 10, 10, 10, 10, 11,
@@ -53,7 +52,7 @@ static const int rookIndexBits[64] = {
         12, 11, 11, 11, 11, 11, 11, 12
 };
 
-static const int bishopIndexBits[64] = {
+static const int BISHOP_INDEX_BITS[64] = {
         6, 5, 5, 5, 5, 5, 5, 6,
         5, 5, 5, 5, 5, 5, 5, 5,
         5, 5, 7, 7, 7, 7, 5, 5,
@@ -63,8 +62,8 @@ static const int bishopIndexBits[64] = {
         5, 5, 5, 5, 5, 5, 5, 5,
         6, 5, 5, 5, 5, 5, 5, 6
 };
-static const int knights_vector[] = {6, -6, 10,-10, 15, -15, 17, -17};
-static const int king_vector[] = {1,-1,8,-8,9,-9,7,-7};
+static const int KNIGHT_VECTOR[] = {6, -6, 10,-10, 15, -15, 17, -17};
+static const int KING_VECTOR[] = {1, -1, 8, -8, 9, -9, 7, -7};
 void init_tables();
 bb rook_table[64][4096];
 bb bishop_table[64][1024];

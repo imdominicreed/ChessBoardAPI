@@ -4,9 +4,9 @@
 #include "engine.h"
 #include "board.h"
 
-int check_if_legal(struct Move move, struct Board board) {
-    struct Move move_list[128];
-    int num_moves = getMoveList(&board, move_list);
+int check_if_legal(Move move, Board board) {
+    Move move_list[128];
+    int num_moves = get_move_list(&board, move_list);
     for (int i = 0; i < num_moves; ++i) {
         if (move_list[i].from == move.from && move_list[i].to == move.to)
             return 1;
@@ -17,27 +17,27 @@ int check_if_legal(struct Move move, struct Board board) {
 int main() {
 
     setbuf(stdout, 0);
-    struct Board board;
-    startBoard(&board);
-    struct Move move_list[128];
-    int num_moves = getMoveList(&board, move_list);
+    Board board;
+    start_board(&board);
+    Move move_list[128];
+    int num_moves = get_move_list(&board, move_list);
     printBoard(&board);
 
     while (num_moves) {
         char movestr[4];
         printf("\n enter a move!");
         scanf("%s", movestr);
-        struct Move move = moveFromString(movestr);
+        Move move = move_to_str(movestr);
         while (!check_if_legal(move, board)) {
             printf("\n enter a VALID move!");
             scanf("%s", movestr);
-            move = moveFromString(movestr);
+            move = move_to_str(movestr);
         }
-        board = doMove(&move, board);
+        board = do_move(&move, board);
         printBoard(& board);
-        struct Move engine = get_best_move(&board, 3);
-        board = doMove(&engine , board);
-        num_moves = getMoveList(&board, move_list);
+        Move engine = get_best_move(&board, 3);
+        board = do_move(&engine, board);
+        num_moves = get_move_list(&board, move_list);
         printBoard(&board);
     }
 }

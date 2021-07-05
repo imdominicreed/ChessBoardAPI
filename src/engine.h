@@ -4,5 +4,5 @@
 #include "board.h"
 #ifndef UNTITLED_ENGINE_H
 #define UNTITLED_ENGINE_H
-struct Move get_best_move(struct Board *board, int depth);
+Move get_best_move(Board *board, int depth);
 #endif //UNTITLED_ENGINE_H
