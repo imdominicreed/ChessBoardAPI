@@ -137,7 +137,7 @@ int get_moves(Move move_list[],  bb attacks, int src, int *moveIndex) {
 
 
 int get_move_list(Board *board, Move *move_list) {
-    //implement promotion, castling, and checks
+    //TODO: Implement promotions and em passants.
     if (!getKing(board, board->white))return 0;
     bb all_pieces = board->white_pieces | board->black_pieces;
     bb king = getKing(board, !board->white);
@@ -269,7 +269,7 @@ void start_board(Board *board) {
     board->castling = 0b1111;
 }
 char get_char_sq(int square, Board *board) {
-    unsigned long long mask = 1ULL << square;
+    bb mask = 1ULL << square;
     if (!(mask & (board->white_pieces | board->black_pieces)))
         return '-';
     char letter;

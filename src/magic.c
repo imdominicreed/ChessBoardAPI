@@ -67,7 +67,6 @@ void lookup_rook_setup() {
 void lookup_bishop_setup() {
     bb edges = (FIRST_COLUMN | LAST_COLUMN | FIRST_ROW | LAST_ROW);
     for (int sq = 0; sq < 64; ++sq) {
-        bb debug = get_ray(sq, NORTH_EAST);
         bishop_mask[sq] = (get_ray(sq, NORTH_WEST) | get_ray(sq, SOUTH_WEST)
                            | get_ray(sq, NORTH_EAST) | get_ray(sq, SOUTH_EAST)) & ~edges;
     }
@@ -108,12 +107,12 @@ void init_rook_magic() {
     for (int sq = 0; sq < 64; ++sq) {
         for (int bits = 0; bits < (1 << ROOK_INDEX_BITS[sq]); ++bits) {
             bb blockers = get_blockers(bits, rook_mask[sq]);
-            int key = (blockers*rookMagics[sq]) >> (64 - ROOK_INDEX_BITS[sq]);
+            int key = (blockers*ROOK_MAGIC[sq]) >> (64 - ROOK_INDEX_BITS[sq]);
             bb debug;
             if (key == 2552 && sq == 56 )
                  debug = rook_mask[sq];
             get_blockers(bits, rook_mask[sq]);
-            rook_table[sq][(blockers*rookMagics[sq]) >> (64 - ROOK_INDEX_BITS[sq])] = get_rook_attacks_magic(sq, blockers);
+            rook_table[sq][(blockers*ROOK_MAGIC[sq]) >> (64 - ROOK_INDEX_BITS[sq])] = get_rook_attacks_magic(sq, blockers);
         }
     }
 }
@@ -152,7 +151,7 @@ void init_bishop_magic() {
 }
 void init_tables() {
     init_rays();
-    lookup_table_jumping_setup(knights_vector, knight_mask);
+    lookup_table_jumping_setup(KNIGHT_VECTOR, knight_mask);
     lookup_table_jumping_setup(KING_VECTOR, king_mask);
     lookup_rook_setup();
     lookup_bishop_setup();
@@ -179,7 +178,7 @@ bb get_king_attacks(int sq) {
 }
 bb get_rook_board(int sq, bb blockers) {
     blockers &= rook_mask[sq];
-    int key = (blockers*rookMagics[sq]) >> (64 - ROOK_INDEX_BITS[sq]);
+    int key = (blockers*ROOK_MAGIC[sq]) >> (64 - ROOK_INDEX_BITS[sq]);
     return rook_table[sq][key];
 }
 

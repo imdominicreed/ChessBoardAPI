@@ -9,7 +9,6 @@
 #define MSB(x) (63 - __builtin_clzll(x))
 #define BITS(x) (__builtin_popcountll(x))
 #define POP_BSF(b, x) (b) = LSB(x); (x) &= ~BIT(b);
-#define POP_MSB(b, x) b = MSB(x); x &= ~BIT(b);
 #define shift(i, n)  if((n)>0) ((i)<<= (n)); else ((i)>>= -(n))
 static const bb LAST_COLUMN = 0x8080808080808080;
 static const bb SEVENTH_COLUMN = 0X4040404040404040;
