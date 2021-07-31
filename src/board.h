@@ -26,7 +26,7 @@ typedef struct {
     unsigned long long knights;
     unsigned long long white_pieces;
     unsigned long long black_pieces;
-    int en_passant;
+    unsigned long long en_passant;
     int castling;
     bool white;
 } Board;
@@ -34,14 +34,15 @@ typedef struct {
     int from;
     int to;
     int promo;
+    int en_passant;
 } Move;
 
-Move move_to_str(char *string);
+Move move_from_str(Board board, char string[4]);
 void printBoard(Board *board);
 void start_board(Board *board);
 Move make_move(int from, int to, int type);
 int get_move_list(Board *board, Move *move_list);
-void print_move(Move *move);
+void print_move(char move_str[4], Move *move);
 Board do_move(Move *move, Board board);
 int cmp_move(const void * a, const void * b);
 void print_move_list(Board board, int sorted);

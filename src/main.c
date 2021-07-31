@@ -27,14 +27,14 @@ int main() {
         char movestr[4];
         printf("\n enter a move!");
         scanf("%s", movestr);
-        Move move = move_to_str(movestr);
+        Move move = move_from_str(board, movestr);
         while (!check_if_legal(move, board)) {
             printf("\n enter a VALID move!");
             scanf("%s", movestr);
-            move = move_to_str(movestr);
+            move = move_from_str(board, movestr);
         }
         board = do_move(&move, board);
-        printBoard(& board);
+        printBoard(&board);
         Move engine = get_best_move(&board, 3);
         board = do_move(&engine, board);
         num_moves = get_move_list(&board, move_list);

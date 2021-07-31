@@ -23,8 +23,9 @@ void promote_pawn_moves(Move move_list[],int src, int dst, int *moveIndex) {
     single_promo(move_list, src, dst, moveIndex, ROOK_PROMO);
     single_promo(move_list, src, dst, moveIndex, BISHOP_PROMO);
 }
-bb get_black_pawn_moves(bb pieces, bb opp_pieces, Move move_list[],  int src, int *moveIndex) {
+bb get_black_pawn_moves(bb pieces, bb en_passant, bb opp_pieces, Move move_list[],  int src, int *moveIndex) {
     bb mask = 1ULL << src;
+    opp_pieces |= en_passant;
     bb attacks = 0;
     bb attack = mask;
     attack >>= 7;
@@ -45,6 +46,7 @@ bb get_black_pawn_moves(bb pieces, bb opp_pieces, Move move_list[],  int src, in
             promote_pawn_moves(move_list, src, src - 9, moveIndex);
         else {
             move_list[*moveIndex] = make_move(src, src - 9, NORMAL_MOVE);
+            move_list[*moveIndex].en_passant = attack & en_passant ? src-1 : 0;
             ++*moveIndex;
             attacks |= attack;
         }
@@ -65,9 +67,10 @@ bb get_black_pawn_moves(bb pieces, bb opp_pieces, Move move_list[],  int src, in
     }
     return attacks;
 }
-bb get_white_pawn_moves(bb pieces, bb opp_pieces, Move move_list[],  int src, int *moveIndex) {
+bb get_white_pawn_moves(bb pieces, bb en_passant, bb opp_pieces, Move move_list[],  int src, int *moveIndex) {
     bb mask = 1ULL << src;
     bb attacks = 0;
+    opp_pieces |= en_passant;
     bb attack = mask;
     attack <<= 7;
     bb last_first_row = 0xFF000000000000FF;
@@ -75,6 +78,7 @@ bb get_white_pawn_moves(bb pieces, bb opp_pieces, Move move_list[],  int src, in
         if (last_first_row & attack)
             promote_pawn_moves(move_list, src, src + 7, moveIndex);
         else {
+            move_list[*moveIndex].en_passant = attack & en_passant ? src-1 : 0;
             move_list[*moveIndex] = make_move(src, src + 7, NORMAL_MOVE);
             ++*moveIndex;
             attacks |= attack;
@@ -92,7 +96,7 @@ bb get_white_pawn_moves(bb pieces, bb opp_pieces, Move move_list[],  int src, in
         }
     }
     attack = mask<<8;
-    if ( !(attack & pieces)) {
+    if (!(attack & pieces)) {
         if (last_first_row & attack)
             promote_pawn_moves(move_list, src, src + 8, moveIndex);
         else {
@@ -147,7 +151,7 @@ int get_move_list(Board *board, Move *move_list) {
     int src;
     while (pieces) {
         POP_BSF(src, pieces);
-        bb mask =  get_bishop_board(src , all_pieces);
+        bb mask = get_bishop_board(src , all_pieces);
         if (mask & king) return 0;
         get_moves(move_list, ~mypieces & get_bishop_board(src , all_pieces), src, &list_index);
     }
@@ -170,7 +174,7 @@ int get_move_list(Board *board, Move *move_list) {
     bb op_pieces = ~mypieces & all_pieces;
     while (pieces) {
         POP_BSF(src, pieces);
-        bb attacks = board->white ? get_white_pawn_moves(all_pieces, op_pieces, move_list, src, &list_index) : get_black_pawn_moves(all_pieces, op_pieces, move_list, src, &list_index);
+        bb attacks = board->white ? get_white_pawn_moves(all_pieces, op_pieces, board->en_passant, move_list, src, &list_index) : get_black_pawn_moves(all_pieces, op_pieces, board->en_passant, move_list, src, &list_index);
         if (attacks & king) return 0;
     }
 
@@ -219,6 +223,11 @@ Board do_move(Move *move, Board board) {
     }
     if (from & board.pawns) {
         make_empty_square(from, &board);
+        if(move->en_passant)
+            make_empty_square(1ULL << move->en_passant, & board);
+        if ((from>>16) & to || (from<<16) & to) {
+            board.en_passant = from>>16 & to ? from>>8 : from << 8;
+        }
         switch (move->promo) {
             case QUEEN_PROMO:
                 *pieces |= to;

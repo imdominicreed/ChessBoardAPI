@@ -5,7 +5,7 @@
 #include "bitutil.h"
 bb RAYS[8][64];
 
-bb west(bb mask, unsigned int shift) {
+bb west(bb mask, int shift) {
     bb attacks = 0;
     shift(mask, shift);
      while (mask && !(mask & FIRST_COLUMN)){
@@ -15,7 +15,7 @@ bb west(bb mask, unsigned int shift) {
     return attacks;
 }
 
-bb east(bb mask, unsigned int shift) {
+bb east(bb mask, int shift) {
     bb attacks = 0;
     shift(mask, shift);
      while (mask && !(mask & LAST_COLUMN)){

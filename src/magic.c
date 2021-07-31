@@ -142,7 +142,7 @@ void init_bishop_magic() {
         for (int bits = 0; bits < 1 << BISHOP_INDEX_BITS[sq]; ++bits) {
             bb blockers = get_blockers(bits, bishop_mask[sq]);
             int key = (blockers * BISHOP_MAGIC[sq]) >> (64 - BISHOP_INDEX_BITS[sq]);
-            if (sq == 5 && key == 13)
+            if (sq == 2 && key == 2)
                 printf("here");
             bishop_table[sq][(blockers * BISHOP_MAGIC[sq]) >> (64 - BISHOP_INDEX_BITS[sq])] = get_bishop_attacks_magic(sq,
                                                                                                                        blockers);

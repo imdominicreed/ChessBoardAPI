@@ -6,6 +6,7 @@
 
 inline Move make_move(int from, int to, int type) {
     Move move;
+    move.en_passant = 0;
     move.from = from;
     move.to = to;
     move.promo = type;
@@ -17,36 +18,42 @@ char get_char(int location) {
 int get_rank(int location) {
     return 1+ location/8;
 }
-void print_sq(int location) {
-    printf("%c", ('a'+(location%8)));
-    printf("%d", 1+ location/8);
+
+void print_sq(char* move, int location) {
+    move[0] = ('a'+(location%8));
+    move[1] = '1' + (location/8);
 }
-void print_move(Move *move) {
-    print_sq(move->from);
-    print_sq(move->to);
+
+void print_move(char move_str[4], Move *move) {
+    print_sq(&move_str[0], move->from);
+    print_sq(&move_str[2], move->to);
 }
 
 int get_sq(char *string, int index) {
     return (string[0+index]-'a') + (8*(string[1+index]-'1'));
 }
-Move move_to_str(char *string) {
-    Move move;
-    move.from = get_sq(string, 0);
-    move.to = get_sq(string, 2);
-    return move;
-}
-void print_move_list(Board board, int sorted) {
-    Move move_list[256];
-    int i = 0;
-    int n_moves = get_move_list(&board, move_list);
-    if (sorted)qsort(move_list, n_moves, sizeof(Move), cmp_move);
-    printf("%d:\n", n_moves);
-    while (i != n_moves) {
-        print_move(&move_list[i]);
-        printf("\n");
-        i++;
+int str_cmp(char string1[4], char string2[4]) {
+    for(int i = 0 ; i<4; i++) {
+        if (string1[i] != string2[i])
+            return 0;
     }
+    return 1;
 }
+
+/** returns move from string */
+Move move_from_str(Board board, char string[4]) {
+    Move move_list[50];
+    int moves = get_move_list(&board, move_list);
+    char holder[4];
+    for(int i=0; i < moves; i++) {
+        print_move(holder, &move_list[i]);
+        if (str_cmp(string, holder))
+            return move_list[i];
+    }
+    //if this occurs it is an error
+    return move_list[0];
+}
+
 
 int cmp_move(const  void * a, const void  * b) {
     Move *a1 = (Move *) a;
