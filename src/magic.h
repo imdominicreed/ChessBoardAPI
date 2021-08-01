@@ -4,13 +4,10 @@
 
 #ifndef UNTITLED_MAGIC_H
 #define UNTITLED_MAGIC_H
-#define bb unsigned long long
-static bb knight_mask[64];
-static bb king_mask[64];
-static bb bishop_mask[64];
-static bb rook_mask[64];
+#define bitboard unsigned long long
 
-static const bb ROOK_MAGIC[64] = {
+
+static const bitboard ROOK_MAGIC[64] = {
         0xa8002c000108020ULL, 0x6c00049b0002001ULL, 0x100200010090040ULL, 0x2480041000800801ULL, 0x280028004000800ULL,
         0x900410008040022ULL, 0x280020001001080ULL, 0x2880002041000080ULL, 0xa000800080400034ULL, 0x4808020004000ULL,
         0x2290802004801000ULL, 0x411000d00100020ULL, 0x402800800040080ULL, 0xb000401004208ULL, 0x2409000100040200ULL,
@@ -26,7 +23,7 @@ static const bb ROOK_MAGIC[64] = {
         0x489a000810200402ULL, 0x1004400080a13ULL, 0x4000011008020084ULL, 0x26002114058042ULL
 };
 
-static const bb BISHOP_MAGIC[64] = {
+static const bitboard BISHOP_MAGIC[64] = {
         0x89a1121896040240ULL, 0x2004844802002010ULL, 0x2068080051921000ULL, 0x62880a0220200808ULL, 0x4042004000000ULL,
         0x100822020200011ULL, 0xc00444222012000aULL, 0x28808801216001ULL, 0x400492088408100ULL, 0x201c401040c0084ULL,
         0x840800910a0010ULL, 0x82080240060ULL, 0x2000840504006000ULL, 0x30010c4108405004ULL, 0x1008005410080802ULL,
@@ -65,12 +62,10 @@ static const int BISHOP_INDEX_BITS[64] = {
 static const int KNIGHT_VECTOR[] = {6, -6, 10,-10, 15, -15, 17, -17};
 static const int KING_VECTOR[] = {1, -1, 8, -8, 9, -9, 7, -7};
 void init_tables();
-bb rook_table[64][4096];
-bb bishop_table[64][1024];
-bb get_bishop_board(int sq, bb blockers);
-bb get_rook_board(int sq, bb blocker);
-bb get_rook_attacks(int sq);
-bb get_bishop_attacks(int sq);
-bb get_king_attacks(int sq);
-bb get_knight_attacks(int sq);
+bitboard rook_table[64][4096];
+bitboard bishop_table[64][1024];
+bitboard get_bishop_board(int sq, bitboard blockers);
+bitboard get_rook_board(int sq, bitboard blocker);
+bitboard get_king_attacks(int sq);
+bitboard get_knight_attacks(int sq);
 #endif //UNTITLED_MAGIC_H

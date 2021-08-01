@@ -5,48 +5,54 @@
 #include "rays.h"
 #include "bitutil.h"
 #include "stdio.h"
-bb last_column(bb location) {
+
+static bitboard knight_mask[64];
+static bitboard king_mask[64];
+static bitboard bishop_mask[64];
+static bitboard rook_mask[64];
+
+bitboard last_column(bitboard location) {
     return location & LAST_COLUMN;
 }
-bb first_column(bb location) {
+bitboard first_column(bitboard location) {
     return location & FIRST_COLUMN;
 }
-bb second_column(bb location) {
+bitboard second_column(bitboard location) {
     return  location & SECOND_COLUMN;
 }
-bb seventh_column(bb location) {
+bitboard seventh_column(bitboard location) {
     return location & SEVENTH_COLUMN;
 }
-bb second_row(bb location) {
+bitboard second_row(bitboard location) {
     return location & SECOND_ROW;
 }
-bb seventh_row(bb location) {
+bitboard seventh_row(bitboard location) {
     return location & SEVENTH_ROW;
 }
 
-int knight_second_column_check(bb location, int move) {
+int knight_second_column_check(bitboard location, int move) {
     return (((first_column(location) || second_column(location)) && (move == -10 || move == 6))
             || ((last_column(location) || seventh_column(location)) && (move == -6 || move == 10)));
 }
-int knight_first_column_check(bb location, int move) {
+int knight_first_column_check(bitboard location, int move) {
     return ((first_column(location) && (move == -17 || move == 15)) || (last_column(location) && (move == 17 || move == -15)));
 }
-int knight_out_of_bounds(bb location, int move) {
+int knight_out_of_bounds(bitboard location, int move) {
     return knight_first_column_check(location, move) || knight_second_column_check(location, move);
 }
-int king_out_of_bounds(bb location, int move) {
+int king_out_of_bounds(bitboard location, int move) {
     return (first_column(location) && (move == 1 || move == 9 || move == -7))
            || (last_column(location) && (move == -1 || move == -9 || move ==7));
 }
 
-void lookup_table_jumping_setup(const int vectors[], bb look_up[]){
-    bb mask = 1;
+void lookup_table_jumping_setup(const int vectors[], bitboard look_up[]){
+    bitboard mask = 1;
     int in = 0;
     while (mask) {
-        bb attacks = 0;
+        bitboard attacks = 0;
         for (int i = 0; i < 8; ++i) {
             int vector = vectors[i];
-            bb dst = mask;
+            bitboard dst = mask;
             shift(dst, vector);
             if (dst == 0 || knight_out_of_bounds(mask, vector) || king_out_of_bounds(mask, vector)) continue;
             attacks |= dst;
@@ -65,14 +71,14 @@ void lookup_rook_setup() {
     }
 }
 void lookup_bishop_setup() {
-    bb edges = (FIRST_COLUMN | LAST_COLUMN | FIRST_ROW | LAST_ROW);
+    bitboard edges = (FIRST_COLUMN | LAST_COLUMN | FIRST_ROW | LAST_ROW);
     for (int sq = 0; sq < 64; ++sq) {
         bishop_mask[sq] = (get_ray(sq, NORTH_WEST) | get_ray(sq, SOUTH_WEST)
                            | get_ray(sq, NORTH_EAST) | get_ray(sq, SOUTH_EAST)) & ~edges;
     }
 }
-bb get_blockers(int index, bb mask) {
-    bb blockers = 0;
+bitboard get_blockers(int index, bitboard mask) {
+    bitboard blockers = 0;
     int num_bits = BITS(mask);
     for (int i = 0; i < num_bits; ++i) {
         int bit_in;
@@ -82,8 +88,8 @@ bb get_blockers(int index, bb mask) {
     }
     return blockers;
 }
-bb get_rook_attacks_magic(int sq, bb blockers) {
-    bb attacks = 0;
+bitboard get_rook_attacks_magic(int sq, bitboard blockers) {
+    bitboard attacks = 0;
     attacks |= get_ray(sq, NORTH);
     if(get_ray(sq, NORTH) & blockers)
         attacks &= ~(get_ray(LSB(get_ray(sq, NORTH) & blockers), NORTH));
@@ -106,9 +112,9 @@ bb get_rook_attacks_magic(int sq, bb blockers) {
 void init_rook_magic() {
     for (int sq = 0; sq < 64; ++sq) {
         for (int bits = 0; bits < (1 << ROOK_INDEX_BITS[sq]); ++bits) {
-            bb blockers = get_blockers(bits, rook_mask[sq]);
+            bitboard blockers = get_blockers(bits, rook_mask[sq]);
             int key = (blockers*ROOK_MAGIC[sq]) >> (64 - ROOK_INDEX_BITS[sq]);
-            bb debug;
+            bitboard debug;
             if (key == 2552 && sq == 56 )
                  debug = rook_mask[sq];
             get_blockers(bits, rook_mask[sq]);
@@ -117,8 +123,8 @@ void init_rook_magic() {
     }
 }
 
-bb get_bishop_attacks_magic(int sq, bb blockers) {
-    bb attacks = 0;
+bitboard get_bishop_attacks_magic(int sq, bitboard blockers) {
+    bitboard attacks = 0;
     attacks |= get_ray(sq, NORTH_EAST);
     if(get_ray(sq, NORTH_EAST) & blockers)
         attacks &= ~(get_ray(LSB(get_ray(sq, NORTH_EAST) & blockers), NORTH_EAST));
@@ -140,7 +146,7 @@ bb get_bishop_attacks_magic(int sq, bb blockers) {
 void init_bishop_magic() {
     for (int sq = 0; sq < 64; ++sq) {
         for (int bits = 0; bits < 1 << BISHOP_INDEX_BITS[sq]; ++bits) {
-            bb blockers = get_blockers(bits, bishop_mask[sq]);
+            bitboard blockers = get_blockers(bits, bishop_mask[sq]);
             int key = (blockers * BISHOP_MAGIC[sq]) >> (64 - BISHOP_INDEX_BITS[sq]);
             if (sq == 2 && key == 2)
                 printf("here");
@@ -158,25 +164,25 @@ void init_tables() {
     init_rook_magic();
     init_bishop_magic();
 }
-bb get_bishop_board(int sq, bb blockers) {
-    bb mask =  bishop_mask[sq];
+bitboard get_bishop_board(int sq, bitboard blockers) {
+    bitboard mask =  bishop_mask[sq];
     blockers &= bishop_mask[sq];
     int key = (blockers * BISHOP_MAGIC[sq]) >> (64 - BISHOP_INDEX_BITS[sq]);
     return bishop_table[sq][key];
 }
-bb get_bishop_attacks(int sq) {
+bitboard get_bishop_attacks(int sq) {
     return  bishop_mask[sq];
 }
-bb get_rook_attacks(int sq) {
+bitboard get_rook_attacks(int sq) {
     return  rook_mask[sq];
 }
-bb get_knight_attacks(int sq) {
+bitboard get_knight_attacks(int sq) {
     return knight_mask[sq];
 }
-bb get_king_attacks(int sq) {
+bitboard get_king_attacks(int sq) {
     return king_mask[sq];
 }
-bb get_rook_board(int sq, bb blockers) {
+bitboard get_rook_board(int sq, bitboard blockers) {
     blockers &= rook_mask[sq];
     int key = (blockers*ROOK_MAGIC[sq]) >> (64 - ROOK_INDEX_BITS[sq]);
     return rook_table[sq][key];

@@ -3,6 +3,7 @@
 //
 #include "board.h"
 #include "bitutil.h"
+#include "move_gen.h"
 
 int eval(Board *board) {
     int white = BITS(board->white_pieces & (board->knights | board->bishops)) * 30;

@@ -6,6 +6,7 @@ def run_perft(program, position, depth):
     p = Popen([program], stdout=PIPE, stdin=PIPE, stderr=PIPE, text=True)
     stdout_data, stderr = p.communicate(input=f"position {position}\ngo perft {depth}\n")
     # TODO: print(stderr)
+    #print(stdout_data)
     paths_tuple = re.findall('^(\w+): (\d+)$', stdout_data, flags=re.MULTILINE)
     return {mov: int(cnt) for [mov, cnt] in paths_tuple}
 
@@ -37,4 +38,4 @@ def search_for_bug(program1, program2, position, depth):
         search_for_bug(program1, program2, f"{position} {move}", depth-1)
         return
 
-search_for_bug("/Users/dominicreed/CLionProjects/untitled/src/a.out", "stockfish", "startpos moves", 5)
+search_for_bug("C:/Users/domin/Documents/domm_chess_engine/cChessEngine/src/a.exe", "C:/Users/domin/Documents/stockfish_14_win_x64_avx2/stockfish_14_x64_avx2.exe", "startpos moves", 5)

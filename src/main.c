@@ -24,7 +24,7 @@ int main() {
     printBoard(&board);
 
     while (num_moves) {
-        char movestr[4];
+        char movestr[5];
         printf("\n enter a move!");
         scanf("%s", movestr);
         Move move = move_from_str(board, movestr);

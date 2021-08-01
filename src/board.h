@@ -37,14 +37,13 @@ typedef struct {
     int en_passant;
 } Move;
 
-Move move_from_str(Board board, char string[4]);
-void printBoard(Board *board);
-void start_board(Board *board);
-Move make_move(int from, int to, int type);
-int get_move_list(Board *board, Move *move_list);
-void print_move(char move_str[4], Move *move);
-Board do_move(Move *move, Board board);
-int cmp_move(const void * a, const void * b);
-void print_move_list(Board board, int sorted);
+
+
+
 
 #endif //UNTITLED_BOARD_H
+
+void printBoard(Board *board);
+void start_board(Board *board);
+Board do_move(Move *move, Board board);
+

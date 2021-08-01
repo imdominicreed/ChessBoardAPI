@@ -2,6 +2,7 @@
 // Created by Dominic Reed on 3/29/21.
 //
 #include "board.h"
+#include "move_gen.h"
 #include <stdlib.h>
 
 inline Move make_move(int from, int to, int type) {
@@ -19,14 +20,15 @@ int get_rank(int location) {
     return 1+ location/8;
 }
 
-void print_sq(char* move, int location) {
-    move[0] = ('a'+(location%8));
-    move[1] = '1' + (location/8);
+void print_sq(char* move, int location, int push) {
+    move[push + 0] = ('a'+(location%8));
+    move[push + 1] = '1' + (location/8);
 }
 
-void print_move(char move_str[4], Move *move) {
-    print_sq(&move_str[0], move->from);
-    print_sq(&move_str[2], move->to);
+void print_move(char move_str[5], Move *move) {
+    print_sq(move_str, move->from, 0);
+    print_sq(move_str, move->to, 2);
+    move_str[4] = '\0';
 }
 
 int get_sq(char *string, int index) {
@@ -44,7 +46,7 @@ int str_cmp(char string1[4], char string2[4]) {
 Move move_from_str(Board board, char string[4]) {
     Move move_list[50];
     int moves = get_move_list(&board, move_list);
-    char holder[4];
+    char holder[5];
     for(int i=0; i < moves; i++) {
         print_move(holder, &move_list[i]);
         if (str_cmp(string, holder))

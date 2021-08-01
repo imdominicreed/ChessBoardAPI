@@ -3,10 +3,10 @@
 //
 #include "rays.h"
 #include "bitutil.h"
-bb RAYS[8][64];
+bitboard RAYS[8][64];
 
-bb west(bb mask, int shift) {
-    bb attacks = 0;
+bitboard west(bitboard mask, int shift) {
+    bitboard attacks = 0;
     shift(mask, shift);
      while (mask && !(mask & FIRST_COLUMN)){
         attacks |= mask;
@@ -15,8 +15,8 @@ bb west(bb mask, int shift) {
     return attacks;
 }
 
-bb east(bb mask, int shift) {
-    bb attacks = 0;
+bitboard east(bitboard mask, int shift) {
+    bitboard attacks = 0;
     shift(mask, shift);
      while (mask && !(mask & LAST_COLUMN)){
         attacks |= mask;
@@ -39,7 +39,7 @@ void init_rays() {
         RAYS[EAST][sq] = 2 * ((1ULL << (sq | 7U)) - (1ULL << sq));
         RAYS[SOUTH][sq] =  0x0080808080808080ULL >> (63U-sq);
         RAYS[NORTH][sq] = 0x0101010101010100ULL << sq;
-        bb mask = 1ULL<< sq;
+        bitboard mask = 1ULL << sq;
         RAYS[NORTH_WEST][sq] = west(mask, 9);
         RAYS[NORTH_EAST][sq] = east(mask, 7);
         RAYS[SOUTH_WEST][sq] = west(mask, -7);
@@ -48,6 +48,6 @@ void init_rays() {
     }
 }
 
-bb get_ray(int sq, int dir) {
+bitboard get_ray(int sq, int dir) {
     return RAYS[dir][sq];
 }
