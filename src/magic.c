@@ -10,6 +10,8 @@ static bitboard knight_mask[64];
 static bitboard king_mask[64];
 static bitboard bishop_mask[64];
 static bitboard rook_mask[64];
+static bitboard rook_table[64][4096];
+static bitboard bishop_table[64][1024];
 
 bitboard last_column(bitboard location) {
     return location & LAST_COLUMN;
@@ -148,8 +150,6 @@ void init_bishop_magic() {
         for (int bits = 0; bits < 1 << BISHOP_INDEX_BITS[sq]; ++bits) {
             bitboard blockers = get_blockers(bits, bishop_mask[sq]);
             int key = (blockers * BISHOP_MAGIC[sq]) >> (64 - BISHOP_INDEX_BITS[sq]);
-            if (sq == 2 && key == 2)
-                printf("here");
             bishop_table[sq][(blockers * BISHOP_MAGIC[sq]) >> (64 - BISHOP_INDEX_BITS[sq])] = get_bishop_attacks_magic(sq,
                                                                                                                        blockers);
         }

@@ -6,7 +6,26 @@
 #include "magic.h"
 #include "move_gen.h"
 #include <string.h>
+#include <stdio.h>
 
+char *strrev(char *str)
+{
+    if (!str || ! *str)
+        return str;
+
+    int i = strlen(str) - 1, j = 0;
+
+    char ch;
+    while (i > j)
+    {
+        ch = str[i];
+        str[i] = str[j];
+        str[j] = ch;
+        i--;
+        j++;
+    }
+    return str;
+}
 
 void make_empty_square(unsigned long long mask, Board *board) {
     board->white_pieces &= ~mask;

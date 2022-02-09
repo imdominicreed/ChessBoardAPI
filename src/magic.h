@@ -62,8 +62,6 @@ static const int BISHOP_INDEX_BITS[64] = {
 static const int KNIGHT_VECTOR[] = {6, -6, 10,-10, 15, -15, 17, -17};
 static const int KING_VECTOR[] = {1, -1, 8, -8, 9, -9, 7, -7};
 void init_tables();
-bitboard rook_table[64][4096];
-bitboard bishop_table[64][1024];
 bitboard get_bishop_board(int sq, bitboard blockers);
 bitboard get_rook_board(int sq, bitboard blocker);
 bitboard get_king_attacks(int sq);

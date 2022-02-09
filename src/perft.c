@@ -6,12 +6,12 @@
 #include <string.h>
 #include <time.h>
 
-long long perft_helper(Board *board, int depth)
+int perft_helper(Board *board, int depth)
 {
 
     Move move_list[256];
-    long long n_moves, i;
-    long long nodes = 0;
+    int n_moves, i;
+    int nodes = 0;
     n_moves = get_move_list(board, move_list);
     if (n_moves == 0)
         return 0;
@@ -24,7 +24,7 @@ long long perft_helper(Board *board, int depth)
     }
     return nodes;
 }
-long long perft(Board board, int depth) {
+int perft(Board board, int depth) {
     printBoard(&board);
     Move move_list[256];
     int i = 0;
@@ -49,6 +49,7 @@ void perftIO() {
     Board board;
     start_board(&board);
     char move_str[1001];
+    printf("Print 3 random things, Then moves. End with go.\n");
     for (int i = 0; i < 4; ++i) {
         scanf("%s", move_str);
     }
@@ -58,6 +59,7 @@ void perftIO() {
         printBoard(&board);
         scanf("%s", move_str);
     }
+    printf("print something random then depth.\n");
     scanf("%s", move_str);
     int depth;
     scanf("%d", &depth);
@@ -66,7 +68,7 @@ void perftIO() {
     long long nodes = perft(board, depth-1);
     t =  clock()-t;
     double nodes_per_second = nodes / (((double) t) / CLOCKS_PER_SEC);
-    printf("total nodes: %I64d nodes per second: %f", nodes, nodes_per_second);
+    printf("total nodes: %d nodes per second: %f", nodes, nodes_per_second);
 
 }
 int main() {

@@ -19,7 +19,7 @@ bitboard get_bishop_attack(bitboard pieces, bitboard all_pieces) {
     pieces += 1;
     while (pieces) {
         POP_BSF(src, pieces)
-        attacks |= bishop_table[src][all_pieces];
+        attacks |= get_bishop_board(src, all_pieces);
     }
     return attacks;
 }
@@ -29,7 +29,7 @@ bitboard get_rooks_attack(bitboard pieces, bitboard all_pieces) {
     int src;
     while (pieces) {
         POP_BSF(src, pieces)
-        attacks |= rook_table[src][all_pieces];
+        attacks |= get_rook_board(src, all_pieces);
     }
     return attacks;
 }
