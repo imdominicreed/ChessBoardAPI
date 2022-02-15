@@ -6,6 +6,7 @@
 #include "magic.h"
 #include "move_gen.h"
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 char *strrev(char *str)
@@ -13,7 +14,7 @@ char *strrev(char *str)
     if (!str || ! *str)
         return str;
 
-    int i = strlen(str) - 1, j = 0;
+    int i = 16 - 1, j = 0;
 
     char ch;
     while (i > j)
@@ -26,7 +27,59 @@ char *strrev(char *str)
     }
     return str;
 }
+Board* import_fen(char* str) {
+    Board* ret = (Board*) malloc(sizeof(Board));
+    bitboard mask = 1ULL << 63;
+    char copy[strlen(str)+1];
+    strncpy(copy, str, strlen(str)+1);
+    const char del[2] = "/";
+    char* row = strtok(copy, del);
+    char* last = NULL;
+    while (row != NULL) {
+        int end = strlen(row);       
+        mask >>= 8;
+        for(int i = 0; i < end; i++) {
+            if(row[i] == ' ') break;
+            if(row[i] - '0' < 9) {
+                mask <<= row[i]-'0';
+                if(!mask) mask = 1ULL << row[i]-'0'-1;
+            } else {
+                mask <<= 1;
+                if(!mask)  mask = 1;
+                if(row[i] == 'r' ||  row[i] == 'R' || row[i] == 'Q' || row[i] == 'q') 
+                    ret->rooks |= mask;
+                if(row[i] == 'b' ||  row[i] == 'B' || row[i] == 'Q' || row[i] == 'q') 
+                    ret->bishops |= mask;
+                else if(row[i] == 'n' || row[i] == 'N')
+                    ret->knights |= mask;
+                else if(row[i] == 'p' || row[i] == 'P')
+                    ret->pawns |= mask;
+                if(row[i]- 'A' < 26) ret->white_pieces |= mask;
+                else ret->black_pieces |= mask;
+            }
+        }
+        mask >>= 8;
+        last = realloc(last, strlen(row)+1);
+        strncpy(last, row, strlen(row)+1);
+        row = strtok(NULL, del);
+    }        
 
+    char* turn = index(last, ' ')+1;
+    ret->white = turn[0] == 'w';
+    char* castling = index(turn, ' ')+1;
+    int i =0;
+    while(castling[i] != ' ') {
+        if(castling[i] == 'k') ret->castling |= 0b0100;
+        if(castling[i] == 'K') ret->castling |= 0b0001;
+        if(castling[i] == 'Q') ret->castling |= 0b0010;
+        if(castling[i] == 'q') ret->castling |= 0b1000;
+        i++;
+    }
+    char* en = castling +i +1;
+    if(en[0] != '-') ret->en_passant = (1ULL << get_sq(en, 0));
+    return ret;
+
+}
 void make_empty_square(unsigned long long mask, Board *board) {
     board->white_pieces &= ~mask;
     board->black_pieces &= ~mask;
@@ -45,30 +98,32 @@ Board do_move(Move *move, Board board) {
     board.en_passant = 0;
     bitboard *pieces = board.white ? &board.white_pieces : &board.black_pieces;
     bitboard king = get_king(&board, board.white);
+     if (king & from)  board.castling &= board.white ? 0b1100 : 0b11;
     if ((king& from) && (move->from-move->to == 2 || move->from-move->to == -2)) {
         move_piece(pieces, move->from, move->to);
-        move_piece(&board.rooks, (move->to % 8 > 4) ? 7 : 0, move->to + ((move->to % 8 > 4) ? 1 : -1));
-        move_piece(pieces, (move->to % 8 > 4) ? 7 : 0, move->to + ((move->to % 8 > 4) ? 1 : -1));
+        move_piece(&board.rooks, (8*(move->to/8)) + ((move->to % 8 > 4) ? 7 : 0), move->to + ((move->to % 8 < 4) ? 1 : -1));
+        move_piece(pieces, (8*(move->to/8)) +((move->to % 8 > 4) ? 7 : 0), move->to + ((move->to % 8 < 4) ? 1 : -1));
+        board.white = !board.white;
         return board;
     }
     make_empty_square(to, &board);
     move_piece(board.white ? &board.white_pieces : &board.black_pieces, move->from, move->to);
     if (from & board.rooks) {
         move_piece(&board.rooks, move->from, move->to);
-        int castling = 1<< (((from %8) < 4) ? 1 : 2);
-        castling <<= board.white ? 0 : 2;
-        board.castling &= ~castling;
-    }
-    if (king & from) {
-        board.castling &= board.white ? 0b1100 : 0b11;
+        if(!(from & board.bishops)) {
+            int castling = 1 << (((move->from %8) < 4) ? 1 : 0);
+            castling <<= board.white ? 0 : 2;
+            board.castling &= ~castling;
+        }
     }
     if (from & board.bishops) {
         move_piece(&board.bishops, move->from, move->to);
     }
     if (from & board.pawns) {
         make_empty_square(from, &board);
-        if(move->en_passant)
-            make_empty_square(1ULL << move->en_passant, &board);
+        if(move->en_passant) {
+            make_empty_square(1ULL << move->to + (board.white ? -8 : 8 ), &board);
+        }
         if ((from>>16) & to || (from<<16) & to) {
             board.en_passant = from>>16 & to ? from>>8 : from << 8;
         }
@@ -139,9 +194,12 @@ char get_char_sq(int square, Board *board) {
         letter = 'n';
     else
         letter = 'k';
-    if (mask & board->black_pieces)
+    if (mask & board->white_pieces)
      letter -= 32;
     return letter;
+}
+bool invalid_king(Board *board) {
+    return get_attack_board(board, board->white) & get_king(board,!board->white);
 }
 void printBoard(Board *board) {
     char str[17];
@@ -149,7 +207,7 @@ void printBoard(Board *board) {
         if (!(i % 8)) {
             str[16] = 0;
             strrev(str);
-            printf("%s\n",str);
+            printf("%s\n",str);   
         }
         str[2 * (i%8)] = get_char_sq(i, board);
         str[2 * (i%8) +1] = ' ';

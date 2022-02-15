@@ -28,7 +28,12 @@ void print_sq(char* move, int location, int push) {
 void print_move(char move_str[5], Move *move) {
     print_sq(move_str, move->from, 0);
     print_sq(move_str, move->to, 2);
-    move_str[4] = '\0';
+    if(move->promo == QUEEN_PROMO) move_str[4] = 'q';
+    if(move->promo == ROOK_PROMO) move_str[4] = 'r';
+    if(move->promo == BISHOP_PROMO) move_str[4] = 'b';
+    if(move->promo == KNIGHT_PROMO) move_str[4] = 'n';
+    if(move->promo == NORMAL_MOVE) move_str[4] = '\0';
+    else move_str[5] = '\0';
 }
 
 int get_sq(char *string, int index) {
@@ -39,14 +44,15 @@ int str_cmp(char string1[4], char string2[4]) {
         if (string1[i] != string2[i])
             return 0;
     }
+    if(string1[4] != '\0' && string1[4] != string2[4]) return 0;
     return 1;
 }
 
 /** returns move from string */
-Move move_from_str(Board board, char string[4]) {
+Move move_from_str(Board board, char string[5]) {
     Move move_list[50];
     int moves = get_move_list(&board, move_list);
-    char holder[5];
+    char holder[6];
     for(int i=0; i < moves; i++) {
         print_move(holder, &move_list[i]);
         if (str_cmp(string, holder))

@@ -12,3 +12,4 @@
 
 bitboard get_king(Board *board, int white);
 int get_move_list(Board *board, Move *move_list);
+bitboard get_attack_board(Board *board, bool white);

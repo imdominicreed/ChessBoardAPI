@@ -43,8 +43,8 @@ int knight_out_of_bounds(bitboard location, int move) {
     return knight_first_column_check(location, move) || knight_second_column_check(location, move);
 }
 int king_out_of_bounds(bitboard location, int move) {
-    return (first_column(location) && (move == 1 || move == 9 || move == -7))
-           || (last_column(location) && (move == -1 || move == -9 || move ==7));
+    return (last_column(location) && (move == 1 || move == 9 || move == -7))
+           || (first_column(location) && (move == -1 || move == -9 || move ==7));
 }
 
 void lookup_table_jumping_setup(const int vectors[], bitboard look_up[]){
@@ -149,7 +149,6 @@ void init_bishop_magic() {
     for (int sq = 0; sq < 64; ++sq) {
         for (int bits = 0; bits < 1 << BISHOP_INDEX_BITS[sq]; ++bits) {
             bitboard blockers = get_blockers(bits, bishop_mask[sq]);
-            int key = (blockers * BISHOP_MAGIC[sq]) >> (64 - BISHOP_INDEX_BITS[sq]);
             bishop_table[sq][(blockers * BISHOP_MAGIC[sq]) >> (64 - BISHOP_INDEX_BITS[sq])] = get_bishop_attacks_magic(sq,
                                                                                                                        blockers);
         }

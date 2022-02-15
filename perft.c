@@ -1,31 +1,29 @@
-
-#include "board.h"
-#include "move_gen.h"
-#include "move.h"
+#include "src/board.h"
+#include "src/move_gen.h"
+#include "src/move.h"
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "src/magic.h"
 
 int perft_helper(Board *board, int depth)
 {
-
     Move move_list[256];
     int n_moves, i;
     int nodes = 0;
     n_moves = get_move_list(board, move_list);
-    if (n_moves == 0)
+    if(n_moves == -1) 
         return 0;
-    if (depth == 0 )
-        return 1ULL;
-
+    if (depth == 0)
+        return 1;
     for (i = 0; i < n_moves; i++) {
         Board next = do_move(&move_list[i], *board);
-        nodes += perft_helper(&next, depth - 1);
+        if(!invalid_king(board))
+        nodes += perft_helper(&next, depth - 1);;
     }
-    return nodes;
+    return nodes == 0 ? 1 : nodes;
 }
 int perft(Board board, int depth) {
-    printBoard(&board);
     Move move_list[256];
     int i = 0;
     int n_moves = get_move_list(&board, move_list);
@@ -34,7 +32,7 @@ int perft(Board board, int depth) {
     while (i != n_moves) {
         Board pos = do_move(&move_list[i], board);
         int curr_nodes = perft_helper(&pos, depth);
-        if (curr_nodes != 0) {
+        if(curr_nodes != 0) {
             char move_str[5];
             print_move(move_str, &move_list[i]);
             printf("%s", move_str);
@@ -46,32 +44,38 @@ int perft(Board board, int depth) {
     return nodes;
 }
 void perftIO() {
-    Board board;
-    start_board(&board);
+    Board* board;
     char move_str[1001];
     printf("Print 3 random things, Then moves. End with go.\n");
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 2; ++i) {
+        scanf("%s", move_str);
+    }    
+
+    scanf("%[^m]", move_str);
+    char* fen = move_str+1;
+    board = import_fen(fen);
+    scanf("%s", move_str);
+    scanf("%s", move_str);
+    while(move_str[0] != 'g' || move_str[1] != 'o') {
+        printBoard(board);
+        Move move = move_from_str(*board, move_str);   
+        *board = do_move(&move, *board);
         scanf("%s", move_str);
     }
-    while (strcmp(move_str, "go")) {
-        Move move = move_from_str(board, move_str);
-        board = do_move(&move, board);
-        printBoard(&board);
-        scanf("%s", move_str);
-    }
+    printBoard(board);
     printf("print something random then depth.\n");
     scanf("%s", move_str);
     int depth;
     scanf("%d", &depth);
     clock_t t;
     t = clock();
-    long long nodes = perft(board, depth-1);
+    int nodes = perft(*board, depth-1);
     t =  clock()-t;
-    double nodes_per_second = nodes / (((double) t) / CLOCKS_PER_SEC);
-    printf("total nodes: %d nodes per second: %f", nodes, nodes_per_second);
-
+    int nodes_per_second = (int) (nodes / ((double) t / CLOCKS_PER_SEC));
+    printf("total nodes: %d nodes per second: %d nps", nodes, nodes_per_second);
 }
 int main() {
+    init_tables();
     perftIO();
 }
 

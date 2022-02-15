@@ -45,8 +45,11 @@ bitboard get_knight_attack(bitboard pieces) {
 }
 
 bitboard get_pawn_attack(bitboard pieces, int shift) {
+    //TODO: BUG HERE
     bitboard attacks = 0;
+    bitboard map = 0b101ULL;
     int src;
+
     while (pieces) {
         POP_BSF(src, pieces)
         attacks |= 0b101ULL << (src + shift);
@@ -61,7 +64,7 @@ bitboard get_attack_board(Board *board, bool white) {
     attacks |= get_rooks_attack(my_pieces & board->rooks, all_pieces);
     attacks |= get_bishop_attack(my_pieces & board->bishops, all_pieces);
     attacks |= get_knight_attack(my_pieces & board->knights);
-    attacks |= get_pawn_attack(my_pieces & board->pawns, board->white ? 7 : -9);
+    attacks |= get_pawn_attack(my_pieces & board->pawns, board->white ? -9 : 7);
     return attacks;
 }
 
@@ -102,7 +105,7 @@ bitboard get_black_pawn_moves(bitboard pieces, bitboard opp_pieces, bitboard en_
     while (attacks) {
         POP_BSF(dst, attacks)
         bitboard dst_mask = 1ULL << dst;
-        if (dst_mask & LAST_ROW) {
+        if (dst_mask & FIRST_ROW) {
             promote_pawn_moves(move_list, src, dst, moveIndex);
         } else {
             move_list[*moveIndex] = make_move(src, dst, NORMAL_MOVE);
@@ -142,7 +145,7 @@ bitboard get_white_pawn_moves(bitboard pieces, bitboard opp_pieces, bitboard en_
             promote_pawn_moves(move_list, src, dst, moveIndex);
         } else {
             move_list[*moveIndex] = make_move(src, dst, NORMAL_MOVE);
-            move_list[*moveIndex].en_passant = dst_mask == en_passant ? dst - 8 : 0;
+            move_list[*moveIndex].en_passant = dst_mask == en_passant ? dst + 8 : 0;
             ++*moveIndex;
         }
     }
@@ -152,17 +155,18 @@ bitboard get_white_pawn_moves(bitboard pieces, bitboard opp_pieces, bitboard en_
 void get_castling_moves(Board *board, Move *move_list, int index, int *moveIndex) {
     int castleBit = board->white ? 1 : 4;
     bitboard mask = 1ULL << index;
-    bitboard castle_sq = 0b1110 << (board->white ? 0 : 56);
+    bitboard castle_sq = 0b01100000ULL << (board->white ? 0 : 56);
     bitboard pieces = board->black_pieces | board->white_pieces;
     bitboard op_attacks = get_attack_board(board, !board->white);
-    if (castleBit & board->castling && castle_sq & (mask | castle_sq) & op_attacks && ~pieces & castle_sq) {
+    if ((castleBit & board->castling) && !((mask | castle_sq) & op_attacks) && !(pieces & castle_sq)) {
         move_list[*moveIndex] = make_move(index, index + 2, CASTLING);
         ++*moveIndex;
     }
-    castle_sq = 0b1100000ULL << (board->white ? 0 : 56);
+    castle_sq = 0b1110ULL << (board->white ? 0 : 56);
+    bitboard no_attacks = 0b1100ULL << (board->white ? 0 : 56);
     castleBit <<= 1;
-    if (castleBit & board->castling && castle_sq & (mask | castle_sq) & op_attacks && ~pieces & castle_sq) {
-        move_list[*moveIndex] = make_move(index, index - 2, CASTLING);;
+    if ((castleBit & board->castling) && !((mask | no_attacks) & op_attacks ) && !(pieces & castle_sq)) {
+        move_list[*moveIndex] = make_move(index, index - 2, CASTLING);
         ++*moveIndex;
     }
 }
@@ -178,9 +182,11 @@ int get_moves(Move move_list[], bitboard attacks, int src, int *moveIndex) {
 }
 
 
+
 int get_move_list(Board *board, Move *move_list) {
     //TODO: Implement promotions and em passants.
-    if (!get_king(board, board->white))return 0;
+    if (!get_king(board, board->white))return -1;
+    // board->white = 1;
     bitboard all_pieces = board->white_pieces | board->black_pieces;
     bitboard king = get_king(board, !board->white);
     bitboard mypieces = board->white ? board->white_pieces : board->black_pieces;
@@ -190,21 +196,21 @@ int get_move_list(Board *board, Move *move_list) {
     while (pieces) {
         POP_BSF(src, pieces);
         bitboard mask = get_bishop_board(src, all_pieces);
-        if (mask & king) return 0;
+        if (mask & king) return -1;
         get_moves(move_list, ~mypieces & get_bishop_board(src, all_pieces), src, &list_index);
     }
     pieces = mypieces & board->rooks;
     while (pieces) {
         POP_BSF(src, pieces);
         bitboard mask = ~mypieces & get_rook_board(src, all_pieces);
-        if (mask & king) return 0;
+        if (mask & king) return -1;
         get_moves(move_list, mask, src, &list_index);
     }
     pieces = mypieces & board->knights;
     while (pieces) {
         POP_BSF(src, pieces);
         bitboard mask = ~mypieces & get_knight_attacks(src);
-        if (mask & king) return 0;
+        if (mask & king) return -1;
         get_moves(move_list, ~mypieces & mask, src, &list_index);
     }
 
@@ -218,14 +224,14 @@ int get_move_list(Board *board, Move *move_list) {
                                                                                                    board->en_passant,
                                                                                                    move_list, src,
                                                                                                    &list_index);
-        if (attacks & king) return 0;
+        if (attacks & king) return -1;
     }
 
     pieces = get_king(board, board->white);
     src = LSB(pieces);
     POP_BSF(src, pieces);
     bitboard mask = ~mypieces & get_king_attacks(src);
-    if (mask & king) return 0;
+    if (mask & king) return -1;
     get_moves(move_list, mask, src, &list_index);
     get_castling_moves(board, move_list, src, &list_index);
     return list_index;
