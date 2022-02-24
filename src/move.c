@@ -25,7 +25,7 @@ void print_sq(char* move, int location, int push) {
     move[push + 1] = '1' + (location/8);
 }
 
-void print_move(char move_str[5], Move *move) {
+void print_move(char* move_str, Move *move) {
     print_sq(move_str, move->from, 0);
     print_sq(move_str, move->to, 2);
     if(move->promo == QUEEN_PROMO) move_str[4] = 'q';
@@ -39,7 +39,7 @@ void print_move(char move_str[5], Move *move) {
 int get_sq(char *string, int index) {
     return (string[0+index]-'a') + (8*(string[1+index]-'1'));
 }
-int str_cmp(char string1[4], char string2[4]) {
+int str_cmp(char* string1, char* string2) {
     for(int i = 0 ; i<4; i++) {
         if (string1[i] != string2[i])
             return 0;

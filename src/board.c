@@ -28,10 +28,9 @@ char *strrev(char *str)
     return str;
 }
 Board* import_fen(char* str) {
-    Board* ret = (Board*) malloc(sizeof(Board));
+    Board* ret = malloc(sizeof(Board));
     bitboard mask = 1ULL << 63;
-    char copy[strlen(str)+1];
-    strncpy(copy, str, strlen(str)+1);
+    char* copy = strdup(str);
     const char del[2] = "/";
     char* row = strtok(copy, del);
     char* last = NULL;

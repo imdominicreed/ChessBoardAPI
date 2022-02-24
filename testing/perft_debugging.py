@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+import traceback
+
+
 def run_perft(program, position, depth):
     from subprocess import Popen, PIPE, STDOUT
     import re
@@ -9,7 +12,8 @@ def run_perft(program, position, depth):
         paths_tuple = re.findall('^(\w+): (\d+)$', stdout_data, flags=re.MULTILINE)
         return {mov: int(cnt) for [mov, cnt] in paths_tuple}
     except:
-        print("STDERROR")
+        print('error')
+        traceback.print_exc()
         print(f"position {position}\ngo perft {depth}\n")
         exit()
     
@@ -30,21 +34,20 @@ def search_for_bug(program1, program2, position, depth):
     if len(results["extra"]) > 0:
         print(f"position {position}\ngo perft {depth}\n")
         print("extras from", position, results["extra"])
-        return False
-
+        exit()
     if len(results["missing"]) > 0:
         print(f"position {position}\ngo perft {depth}\n")
         print("missing from", position, results["missing"])
-        return False
+        exit()
     if len(results["mismatched"]) > 0:
-        [move, _, _] = results["mismatched"][0]
-        return search_for_bug(program1, program2, f"{position} {move}", depth-1)
+        for move,_,_ in results["mismatched"]:
+            search_for_bug(program1, program2, f"{position} {move}", depth-1)
     return True
-f = open("perftsuite.epd", "r")
+f = open("testing/perftsuite.epd", "r")
 lines = f.readlines()
 for l in lines:
     fen = l.split(';')[0]
     print(fen)
     if not search_for_bug('build/chess','stockfish', 'fen ' + fen + ' moves ', 5):
-        break
+        exit()
 print('PASSED ALL TESTS!')
