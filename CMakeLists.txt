@@ -1,9 +1,8 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(chess VERSION 0.1.0)
 set(CMAKE_C_STANDARD 99)
-
 enable_testing()
-set(CMAKE_C_FLAGS_RELEASE "-O3 -Wall -Wextra")
+# set(CMAKE_C_FLAGS_RELEASE "-O3 -Wall -Wextra -flto")
 
 file(GLOB src_files CONFIGURE_DEPENDS
         "src/*")

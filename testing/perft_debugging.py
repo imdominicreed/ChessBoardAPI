@@ -40,6 +40,7 @@ def search_for_bug(program1, program2, position, depth):
         print("missing from", position, results["missing"])
         exit()
     if len(results["mismatched"]) > 0:
+        print("Error Found.")
         for move,_,_ in results["mismatched"]:
             search_for_bug(program1, program2, f"{position} {move}", depth-1)
     return True

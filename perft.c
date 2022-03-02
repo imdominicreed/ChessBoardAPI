@@ -73,6 +73,7 @@ void perftIO() {
     t =  clock()-t;
     int nodes_per_second = (int) (nodes / ((double) t / CLOCKS_PER_SEC));
     printf("total nodes: %d nodes per second: %d nps", nodes, nodes_per_second);
+    free(board);
 }
 int main() {
     init_tables();

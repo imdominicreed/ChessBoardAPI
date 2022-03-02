@@ -11,9 +11,6 @@
 
 char *strrev(char *str)
 {
-    if (!str || ! *str)
-        return str;
-
     int i = 16 - 1, j = 0;
 
     char ch;
@@ -28,7 +25,7 @@ char *strrev(char *str)
     return str;
 }
 Board* import_fen(char* str) {
-    Board* ret = malloc(sizeof(Board));
+    Board* ret = calloc(1, sizeof(Board));
     bitboard mask = 1ULL << 63;
     char* copy = strdup(str);
     const char del[2] = "/";
@@ -201,9 +198,9 @@ bool invalid_king(Board *board) {
     return get_attack_board(board, board->white) & get_king(board,!board->white);
 }
 void printBoard(Board *board) {
-    char str[17];
+    char* str = malloc(17* sizeof(char));
     for (int i = 0; i < 64; ++i) {
-        if (!(i % 8)) {
+        if (!(i % 8) && i) {
             str[16] = 0;
             strrev(str);
             printf("%s\n",str);   
@@ -214,4 +211,5 @@ void printBoard(Board *board) {
     str[16] = 0;
     strrev(str);
     printf("%s\n", str);
+    free(str);
 }
