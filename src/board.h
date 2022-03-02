@@ -47,5 +47,5 @@ void printBoard(Board *board);
 void start_board(Board *board);
 Board do_move(Move *move, Board board);
 Board* import_fen(char *str);
-bool invalid_king(Board *board);
+bool in_check(Board *board);
 

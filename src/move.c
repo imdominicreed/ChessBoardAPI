@@ -32,7 +32,7 @@ void print_move(char* move_str, Move *move) {
     if(move->promo == ROOK_PROMO) move_str[4] = 'r';
     if(move->promo == BISHOP_PROMO) move_str[4] = 'b';
     if(move->promo == KNIGHT_PROMO) move_str[4] = 'n';
-    if(move->promo == NORMAL_MOVE) move_str[4] = '\0';
+    if(move->promo == NORMAL_MOVE || move->promo == CASTLING) move_str[4] = '\0';
     else move_str[5] = '\0';
 }
 
@@ -50,7 +50,7 @@ int str_cmp(char* string1, char* string2) {
 
 /** returns move from string */
 Move move_from_str(Board board, char string[5]) {
-    Move move_list[50];
+    Move move_list[256];
     int moves = get_move_list(&board, move_list);
     char holder[6];
     for(int i=0; i < moves; i++) {

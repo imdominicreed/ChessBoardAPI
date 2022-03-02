@@ -194,10 +194,11 @@ char get_char_sq(int square, Board *board) {
      letter -= 32;
     return letter;
 }
-bool invalid_king(Board *board) {
-    return get_attack_board(board, board->white) & get_king(board,!board->white);
+bool in_check(Board *board) {
+    return get_attack_board(board, board->white) & get_king(board, !board->white);
 }
 void printBoard(Board *board) {
+    printf("\n");
     char* str = malloc(17* sizeof(char));
     for (int i = 0; i < 64; ++i) {
         if (!(i % 8) && i) {

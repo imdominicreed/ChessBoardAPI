@@ -16,7 +16,6 @@ bitboard get_king(Board *board, int white) {
 bitboard get_bishop_attack(bitboard pieces, bitboard all_pieces) {
     bitboard attacks = 0;
     int src = 0;
-    pieces += 1;
     while (pieces) {
         POP_BSF(src, pieces)
         attacks |= get_bishop_board(src, all_pieces);
@@ -44,27 +43,48 @@ bitboard get_knight_attack(bitboard pieces) {
     return attacks;
 }
 
-bitboard get_pawn_attack(bitboard pieces, int shift) {
-    //TODO: BUG HERE
-    bitboard attacks = 0;
-    bitboard map = 0b101ULL;
-    int src;
-
-    while (pieces) {
-        POP_BSF(src, pieces)
-        attacks |= 0b101ULL << (src + shift);
+bitboard get_white_pawn_attack(bitboard pieces) {
+    bitboard ret = 0;
+    while(pieces) {
+        bitboard attacks = 0b101;
+        if (pieces & FIRST_COLUMN)
+            attacks = 0b100;
+        if (pieces & LAST_COLUMN)
+            attacks = 0b1;
+        int dst; POP_BSF(dst, pieces);
+        attacks <<= dst + 7;
+        ret |= attacks;
     }
-    return attacks;
+    return ret;
+}
+
+bitboard get_black_pawn_attack(bitboard pieces) {
+    bitboard ret = 0;
+    while(pieces) {
+        bitboard attacks = 0b101;
+        int dst; POP_BSF(dst, pieces);
+        bitboard mask = 1ULL << dst;
+        if (mask & FIRST_COLUMN)
+            attacks = 0b100;
+        if (mask & LAST_COLUMN)
+            attacks = 0b1;
+        shift(attacks, dst - 9);
+        ret |= attacks;
+    }
+    return ret;
 }
 
 bitboard get_attack_board(Board *board, bool white) {
-    bitboard attacks = 0;
+    bitboard king_m = get_king(board, white);
+    int k; POP_BSF(k, king_m);
+    bitboard attacks = get_king_attacks(k);
     bitboard my_pieces = white ? board->white_pieces : board->black_pieces;
     bitboard all_pieces = board->black_pieces | board->white_pieces;
     attacks |= get_rooks_attack(my_pieces & board->rooks, all_pieces);
     attacks |= get_bishop_attack(my_pieces & board->bishops, all_pieces);
     attacks |= get_knight_attack(my_pieces & board->knights);
-    attacks |= get_pawn_attack(my_pieces & board->pawns, board->white ? -9 : 7);
+    if(white) attacks |= get_white_pawn_attack(my_pieces & board->pawns);
+    else attacks |= get_black_pawn_attack(my_pieces & board->pawns);
     return attacks;
 }
 
@@ -89,7 +109,8 @@ bitboard get_black_pawn_moves(bitboard pieces, bitboard opp_pieces, bitboard en_
         attacks = 0b100;
     if (mask & LAST_COLUMN)
         attacks = 0b1;
-    attacks <<= src - 9;
+    if(src > 9) attacks <<= src - 9;
+    else attacks >>= -(src-9);
     attacks &= opp_pieces | en_passant;
     //Sets up movement.
     bitboard ret = attacks;
@@ -155,17 +176,19 @@ bitboard get_white_pawn_moves(bitboard pieces, bitboard opp_pieces, bitboard en_
 void get_castling_moves(Board *board, Move *move_list, int index, int *moveIndex) {
     int castleBit = board->white ? 1 : 4;
     bitboard mask = 1ULL << index;
-    bitboard castle_sq = 0b01100000ULL << (board->white ? 0 : 56);
+    bitboard possible_sq = 0b1100000ULL << (board->white ? 0 : 56);
+    bitboard check_sq = 0b01100000ULL << (board->white ? 0 : 56);
     bitboard pieces = board->black_pieces | board->white_pieces;
     bitboard op_attacks = get_attack_board(board, !board->white);
-    if ((castleBit & board->castling) && !((mask | castle_sq) & op_attacks) && !(pieces & castle_sq)) {
+    if ((castleBit & board->castling) && !((mask | check_sq) & op_attacks) && !(pieces & possible_sq)) {
         move_list[*moveIndex] = make_move(index, index + 2, CASTLING);
         ++*moveIndex;
     }
-    castle_sq = 0b1110ULL << (board->white ? 0 : 56);
-    bitboard no_attacks = 0b1100ULL << (board->white ? 0 : 56);
+    //TODO:possible bug
+    check_sq = 0b1100ULL << (board->white ? 0 : 56);
+    possible_sq = 0b1110ULL << (board->white ? 0 : 56);
     castleBit <<= 1;
-    if ((castleBit & board->castling) && !((mask | no_attacks) & op_attacks ) && !(pieces & castle_sq)) {
+    if ((castleBit & board->castling) && !((mask | check_sq) & op_attacks ) && !(pieces & possible_sq)) {
         move_list[*moveIndex] = make_move(index, index - 2, CASTLING);
         ++*moveIndex;
     }

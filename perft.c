@@ -12,33 +12,36 @@ int perft_helper(Board *board, int depth)
     int n_moves, i;
     int nodes = 0;
     n_moves = get_move_list(board, move_list);
-    if(n_moves == -1) 
-        return 0;
+    if(n_moves < 0) n_moves = 0;
     if (depth == 0)
         return 1;
     for (i = 0; i < n_moves; i++) {
         Board next = do_move(&move_list[i], *board);
-        if(!invalid_king(board))
-        nodes += perft_helper(&next, depth - 1);;
+        if(!in_check(&next))
+            nodes += perft_helper(&next, depth - 1);
     }
-    return nodes == 0 ? 1 : nodes;
+    return nodes;
 }
 int perft(Board board, int depth) {
     Move move_list[256];
     int i = 0;
     int n_moves = get_move_list(&board, move_list);
-    //qsort(move_list, n_moves, sizeof(Move), cmp_move);
+    qsort(move_list, n_moves, sizeof(Move), cmp_move);
     int nodes = 0;
     while (i != n_moves) {
         Board pos = do_move(&move_list[i], board);
+        if(in_check(&pos)) {
+            i++;
+            continue;
+        }
         int curr_nodes = perft_helper(&pos, depth);
-        if(curr_nodes != 0) {
+
             char move_str[5];
             print_move(move_str, &move_list[i]);
             printf("%s", move_str);
             printf(": %d\n", curr_nodes);
             nodes+= curr_nodes;
-        }
+        
         i++;
     }
     return nodes;

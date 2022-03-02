@@ -40,8 +40,9 @@ def search_for_bug(program1, program2, position, depth):
         print("missing from", position, results["missing"])
         exit()
     if len(results["mismatched"]) > 0:
-        print("Error Found.")
-        for move,_,_ in results["mismatched"]:
+        for move,e,s in results["mismatched"]:
+            print(move, e,s,'\n')
+            print(f"position {position}\ngo perft {depth}\n")
             search_for_bug(program1, program2, f"{position} {move}", depth-1)
     return True
 f = open("testing/perftsuite.epd", "r")
@@ -52,3 +53,4 @@ for l in lines:
     if not search_for_bug('build/chess','stockfish', 'fen ' + fen + ' moves ', 5):
         exit()
 print('PASSED ALL TESTS!')
+# search_for_bug('build/chess','stockfish', 'fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1  moves  f2f4 e7e5 g2g4', 2)
