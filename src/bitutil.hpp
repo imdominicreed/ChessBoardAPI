@@ -1,8 +1,4 @@
-//
-// Created by Dominic Reed on 4/15/21.
-//
-#ifndef UNTITLED_BITUTIL_H
-#define UNTITLED_BITUTIL_H
+
 #define bitboard unsigned long long
 #define BIT(sq) (1ULL << (sq))
 #define LSB(x) (__builtin_ctzll(x))
@@ -19,4 +15,4 @@ static const bitboard SECOND_ROW = 0x000000000000FF00;
 static const bitboard FIRST_ROW = 0xFF;
 static const bitboard LAST_ROW = 0xFF00000000000000;
 
-#endif //UNTITLED_BITUTIL_H
+

@@ -66,4 +66,4 @@ bitboard get_bishop_board(int sq, bitboard blockers);
 bitboard get_rook_board(int sq, bitboard blocker);
 bitboard get_king_attacks(int sq);
 bitboard get_knight_attacks(int sq);
-#endif //UNTITLED_MAGIC_H
+#endif //UNTITLED_MAGIC_HPP

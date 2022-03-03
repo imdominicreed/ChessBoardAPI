@@ -6,9 +6,9 @@
 #define UNTITLED_MOVE_GEN_H
 
 #endif //UNTITLED_MOVE_GEN_H
-#include "board.h"
-#include "bitutil.h"
-#include "move.h"
+#include "board.hpp"
+#include "bitutil.hpp"
+#include "move.hpp"
 
 bitboard get_king(Board *board, int white);
 int get_move_list(Board *board, Move *move_list);

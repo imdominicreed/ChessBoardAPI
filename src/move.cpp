@@ -1,11 +1,11 @@
 //
 // Created by Dominic Reed on 3/29/21.
 //
-#include "board.h"
-#include "move_gen.h"
+#include "board.hpp"
+#include "move_gen.hpp"
 #include <stdlib.h>
 
-inline Move make_move(int from, int to, int type) {
+Move make_move(int from, int to, int type) {
     Move move;
     move.en_passant = 0;
     move.from = from;

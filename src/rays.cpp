@@ -1,8 +1,8 @@
 //
 // Created by Dominic Reed on 4/15/21.
 //
-#include "rays.h"
-#include "bitutil.h"
+#include "rays.hpp"
+#include "bitutil.hpp"
 bitboard RAYS[8][64];
 
 bitboard west(bitboard mask, int shift) {

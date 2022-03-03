@@ -5,7 +5,7 @@
 #ifndef UNTITLED_MOVE_H
 #define UNTITLED_MOVE_H
 
-#include "board.h"
+#include "board.hpp"
 
 #endif //UNTITLED_MOVE_H
 Move move_from_str(Board board, char string[5]);

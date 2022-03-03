@@ -1,10 +1,10 @@
-#include "src/board.h"
-#include "src/move_gen.h"
-#include "src/move.h"
+#include "src/board.hpp"
+#include "src/move_gen.hpp"
+#include "src/move.hpp"
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "src/magic.h"
+#include "src/magic.hpp"
 
 int perft_helper(Board *board, int depth)
 {

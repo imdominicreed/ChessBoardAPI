@@ -1,9 +1,9 @@
 //
 // Created by Dominic Reed on 4/15/21.
 //
-#include "magic.h"
-#include "rays.h"
-#include "bitutil.h"
+#include "magic.hpp"
+#include "rays.hpp"
+#include "bitutil.hpp"
 #include "stdio.h"
 
 static bitboard knight_mask[64];

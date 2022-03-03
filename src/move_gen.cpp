@@ -1,10 +1,10 @@
 //
 // Created by domin on 7/31/2021.
 //
-#include "board.h"
-#include "bitutil.h"
-#include "magic.h"
-#include "move.h"
+#include "board.hpp"
+#include "bitutil.hpp"
+#include "magic.hpp"
+#include "move.hpp"
 
 bitboard get_king(Board *board, int white) {
     bitboard pieces = board->black_pieces | board->white_pieces;

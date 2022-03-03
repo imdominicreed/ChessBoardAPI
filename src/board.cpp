@@ -1,10 +1,8 @@
-//
-// Created by Dominic Reed on 3/29/21.
-//
 
 
-#include "magic.h"
-#include "move_gen.h"
+
+#include "magic.hpp"
+#include "move_gen.hpp"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -25,7 +23,7 @@ char *strrev(char *str)
     return str;
 }
 Board* import_fen(char* str) {
-    Board* ret = calloc(1, sizeof(Board));
+    Board* ret = (Board*) calloc(1, sizeof(Board));
     bitboard mask = 1ULL << 63;
     char* copy = strdup(str);
     const char del[2] = "/";
@@ -55,7 +53,7 @@ Board* import_fen(char* str) {
             }
         }
         mask >>= 8;
-        last = realloc(last, strlen(row)+1);
+        last = (char*) realloc(last, strlen(row)+1);
         strncpy(last, row, strlen(row)+1);
         row = strtok(NULL, del);
     }        
@@ -199,7 +197,7 @@ bool in_check(Board *board) {
 }
 void printBoard(Board *board) {
     printf("\n");
-    char* str = malloc(17* sizeof(char));
+    char* str = (char*) malloc(17* sizeof(char));
     for (int i = 0; i < 64; ++i) {
         if (!(i % 8) && i) {
             str[16] = 0;
