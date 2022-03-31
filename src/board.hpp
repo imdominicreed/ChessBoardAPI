@@ -6,6 +6,7 @@
 #define UNTITLED_BOARD_H
 #include <stdbool.h>
 #include <stdio.h>
+#include <string>
 #define sliding_size 4
 #define jumping_size 8
 #define pawn_size 4
@@ -43,7 +44,7 @@ typedef struct {
 
 #endif //UNTITLED_BOARD_H
 
-void printBoard(Board *board);
+std::string printBoard(Board *board);
 void start_board(Board *board);
 Board do_move(Move *move, Board board);
 Board* import_fen(char *str);

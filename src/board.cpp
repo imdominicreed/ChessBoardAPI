@@ -1,6 +1,6 @@
 
 
-
+#include <algorithm>
 #include "magic.hpp"
 #include "move_gen.hpp"
 #include <string.h>
@@ -195,20 +195,17 @@ char get_char_sq(int square, Board *board) {
 bool in_check(Board *board) {
     return get_attack_board(board, board->white) & get_king(board, !board->white);
 }
-void printBoard(Board *board) {
-    printf("\n");
-    char* str = (char*) malloc(17* sizeof(char));
-    for (int i = 0; i < 64; ++i) {
+std::string printBoard(Board *board) {
+    std::string s;
+    std::string rev;
+    for (int i = 0; i <= 64; ++i) {
         if (!(i % 8) && i) {
-            str[16] = 0;
-            strrev(str);
-            printf("%s\n",str);   
+	    std::reverse(rev.begin(), rev.end());
+            s += rev + '\n';
+	    rev = "";
         }
-        str[2 * (i%8)] = get_char_sq(i, board);
-        str[2 * (i%8) +1] = ' ';
+	rev += get_char_sq(i, board);
+        rev += ' ';
     }
-    str[16] = 0;
-    strrev(str);
-    printf("%s\n", str);
-    free(str);
+    return s;
 }
