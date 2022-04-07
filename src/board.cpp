@@ -122,12 +122,14 @@ int get_hash_number(Board* b, int curr) {
 void update_hash(Board* b, int from, int to) {
 	int piece = get_hash_number(b, from);
 	b->key ^= z.table[from][piece];
+	b->key ^= z.table[to][piece];
 	if((1ULL << to) & (b->white_pieces | b->black_pieces))
 		b->key ^= z.table[to][get_hash_number(b, to)];
 	b->key ^= z.turn;
 }
 
 Board do_move(Move *move, Board board) {
+	update_hash(&board, move->from, move->to);
     unsigned long long from = 1ULL << move->from;
     unsigned long long to = 1ULL << move->to;
     board.en_passant = 0;
