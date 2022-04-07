@@ -1,11 +1,31 @@
-
-
+#include "board.hpp"
 #include <algorithm>
 #include "magic.hpp"
 #include "move_gen.hpp"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include<iostream>
+#include<time.h>
+
+Zorbist z;
+
+unsigned long long Zorbist::random() {
+	return (0xFFFFLL & rand()) | ((0xFFFFLL & rand()) << 16) | ((0xFFFFLL & rand()) << 32) | ((0xFFFFLL & rand()) << 48);
+}
+
+Zorbist::Zorbist() {
+	std::cerr << "table contructed" << std::endl;
+	std::srand(time(nullptr));
+	for(int i = 0; i < 64; i++) {
+		for(int j = 0; j < 12; j++) {
+			table[i][j] = random();
+		}
+	}
+	turn = random();
+}
+
+
 
 char *strrev(char *str)
 {
@@ -71,6 +91,7 @@ Board* import_fen(char* str) {
     }
     char* en = castling +i +1;
     if(en[0] != '-') ret->en_passant = (1ULL << get_sq(en, 0));
+	ret->key = 0;
     return ret;
 
 }
@@ -86,6 +107,26 @@ void move_piece(unsigned long long *board, int from, int to) {
     *board ^= 1ULL << from;
     *board ^= 1ULL << to;
 }
+
+int get_hash_number(Board* b, int curr) {
+	int offset = 0;
+	unsigned long long mask = 1ULL << curr;
+	if(mask & b->black_pieces) offset = 6;
+	if(mask & b->pawns) return offset + 1;
+	if(mask & b->knights) return offset + 4;
+	if(mask & b->bishops) offset += 2;
+	if(mask & b->rooks) offset += 3;
+	return offset;
+}
+
+void update_hash(Board* b, int from, int to) {
+	int piece = get_hash_number(b, from);
+	b->key ^= z.table[from][piece];
+	if((1ULL << to) & (b->white_pieces | b->black_pieces))
+		b->key ^= z.table[to][get_hash_number(b, to)];
+	b->key ^= z.turn;
+}
+
 Board do_move(Move *move, Board board) {
     unsigned long long from = 1ULL << move->from;
     unsigned long long to = 1ULL << move->to;
@@ -169,6 +210,7 @@ void start_board(Board *board) {
     board->black_pieces = board->white_pieces <<48;
     board->white = true;
     board->castling = 0b1111;
+	board->key = 0;
     board->en_passant = 0;
 }
 char get_char_sq(int square, Board *board) {

@@ -20,7 +20,15 @@ enum  {
     LONG_CASTLE = 2, SHORT_CASTLE = 1, BLACK = 2
 };
 
+struct Zorbist {
+	unsigned long long table[64][12];
+	unsigned long long turn;
+	unsigned long long random();
+	Zorbist();
+};
+
 typedef struct {
+	unsigned long long key;
     unsigned long long pawns;
     unsigned long long bishops;
     unsigned long long rooks;
@@ -37,7 +45,6 @@ typedef struct {
     int promo;
     int en_passant;
 } Move;
-
 
 
 
