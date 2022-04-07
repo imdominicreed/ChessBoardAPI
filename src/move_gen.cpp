@@ -184,7 +184,6 @@ void get_castling_moves(Board *board, Move *move_list, int index, int *moveIndex
         move_list[*moveIndex] = make_move(index, index + 2, CASTLING);
         ++*moveIndex;
     }
-    //TODO:possible bug
     check_sq = 0b1100ULL << (board->white ? 0 : 56);
     possible_sq = 0b1110ULL << (board->white ? 0 : 56);
     castleBit <<= 1;
@@ -207,9 +206,7 @@ int get_moves(Move move_list[], bitboard attacks, int src, int *moveIndex) {
 
 
 int get_move_list(Board *board, Move *move_list) {
-    //TODO: Implement promotions and em passants.
     if (!get_king(board, board->white))return -1;
-    // board->white = 1;
     bitboard all_pieces = board->white_pieces | board->black_pieces;
     bitboard king = get_king(board, !board->white);
     bitboard mypieces = board->white ? board->white_pieces : board->black_pieces;
