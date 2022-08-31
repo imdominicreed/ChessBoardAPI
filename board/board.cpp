@@ -43,7 +43,7 @@ Board* import_fen(char* str) {
       if (row[i] == ' ') break;
       if (row[i] - '0' < 9) {
         mask <<= row[i] - '0';
-        if (!mask) mask = 1ULL << row[i] - '0' - 1;
+        if (!mask) mask = 1ULL << (row[i] - '0' - 1);
       } else {
         mask <<= 1;
         if (!mask) mask = 1;
@@ -152,7 +152,7 @@ Board do_move(Move* move, Board board) {
   if (from & board.pawns) {
     make_empty_square(from, &board);
     if (move->en_passant) {
-      make_empty_square(1ULL << move->to + (board.white ? -8 : 8), &board);
+      make_empty_square(1ULL << (move->to + (board.white ? -8 : 8)), &board);
     }
     if ((from >> 16) & to || (from << 16) & to) {
       board.en_passant = from >> 16 & to ? from >> 8 : from << 8;
