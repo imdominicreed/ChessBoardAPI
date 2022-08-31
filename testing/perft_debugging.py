@@ -8,15 +8,17 @@ def run_perft(program, position, depth):
     import re
     try:
         p = Popen([program], stdout=PIPE, stdin=PIPE, stderr=PIPE, text=True)
-        stdout_data, stderr = p.communicate(input=f"position {position}\ngo perft {depth}\n")
-        paths_tuple = re.findall('^(\w+): (\d+)$', stdout_data, flags=re.MULTILINE)
+        stdout_data, stderr = p.communicate(
+            input=f"position {position}\ngo perft {depth}\n")
+        paths_tuple = re.findall(
+            '^(\w+): (\d+)$', stdout_data, flags=re.MULTILINE)
         return {mov: int(cnt) for [mov, cnt] in paths_tuple}
     except:
         print('error')
         traceback.print_exc()
         print(f"position {position}\ngo perft {depth}\n")
         exit()
-    
+
 
 def diff_perft(program1, program2, position, depth):
     chess_engine_perft = run_perft(program1, position, depth)
@@ -40,17 +42,19 @@ def search_for_bug(program1, program2, position, depth):
         print("missing from", position, results["missing"])
         exit()
     if len(results["mismatched"]) > 0:
-        for move,e,s in results["mismatched"]:
-            print(move, e,s,'\n')
+        for move, e, s in results["mismatched"]:
+            print(move, e, s, '\n')
             print(f"position {position}\ngo perft {depth}\n")
             search_for_bug(program1, program2, f"{position} {move}", depth-1)
     return True
+
+
 f = open("testing/perftsuite.epd", "r")
 lines = f.readlines()
 for l in lines:
     fen = l.split(';')[0]
     print(fen)
-    if not search_for_bug('build/chess','stockfish', 'fen ' + fen + ' moves ', 5):
+    if not search_for_bug('build/chess', 'stockfish', 'fen ' + fen + ' moves ', 5):
         exit()
 print('PASSED ALL TESTS!')
 # search_for_bug('build/chess','stockfish', 'fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1  moves  f2f4 e7e5 g2g4', 2)
