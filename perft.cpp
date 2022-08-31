@@ -12,7 +12,9 @@ int perft_helper(Board* board, int depth) {
   int n_moves, i;
   int nodes = 0;
   n_moves = get_move_list(board, move_list);
-  if (n_moves < 0) n_moves = 0;
+  if (n_moves < 0) {
+    return 0;
+  }
   if (depth == 0) return 1;
   for (i = 0; i < n_moves; i++) {
     Board next = do_move(&move_list[i], *board);
@@ -33,8 +35,7 @@ int perft(Board board, int depth) {
       continue;
     }
     int curr_nodes = perft_helper(&pos, depth);
-
-    char move_str[5];
+    char move_str[6];
     print_move(move_str, &move_list[i]);
     printf("%s", move_str);
     printf(": %d\n", curr_nodes);
@@ -73,7 +74,7 @@ void perftIO() {
   int nodes = perft(*board, depth - 1);
   t = clock() - t;
   int nodes_per_second = (int)(nodes / ((double)t / CLOCKS_PER_SEC));
-  printf("total nodes: %d nodes per second: %d nps", nodes, nodes_per_second);
+  printf("\nn ps: %d\ntotal nodes: %d", nodes_per_second, nodes);
   free(board);
 }
 int main() {
