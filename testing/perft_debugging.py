@@ -54,7 +54,6 @@ lines = f.readlines()
 for l in lines:
     fen = l.split(';')[0]
     print(fen)
-    if not search_for_bug('build/chess', 'stockfish', 'fen ' + fen + ' moves ', 5):
+    if not search_for_bug('build/perft', 'stockfish', 'fen ' + fen + ' moves ', 5):
         exit()
 print('PASSED ALL TESTS!')
-# search_for_bug('build/chess','stockfish', 'fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1  moves  f2f4 e7e5 g2g4', 2)
