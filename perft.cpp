@@ -26,7 +26,7 @@ int perft(Board board, int depth) {
   Move move_list[256];
   int i = 0;
   int n_moves = get_move_list(&board, move_list);
-  qsort(move_list, n_moves, sizeof(Move), cmp_move);
+  //   qsort(move_list, n_moves, sizeof(Move), cmp_move);
   int nodes = 0;
   while (i != n_moves) {
     Board pos = do_move(&move_list[i], board);
@@ -64,7 +64,7 @@ void perftIO() {
     *board = do_move(&move, *board);
     scanf("%s", move_str);
   }
-  printBoard(board);
+  printf("%s", printBoard(board).c_str());
   printf("print something random then depth.\n");
   scanf("%s", move_str);
   int depth;
@@ -74,7 +74,7 @@ void perftIO() {
   int nodes = perft(*board, depth - 1);
   t = clock() - t;
   int nodes_per_second = (int)(nodes / ((double)t / CLOCKS_PER_SEC));
-  printf("\nn ps: %d\ntotal nodes: %d", nodes_per_second, nodes);
+  printf("\nnps: %d\ntotal nodes: %d", nodes_per_second, nodes);
   free(board);
 }
 int main() {

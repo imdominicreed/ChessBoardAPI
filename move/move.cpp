@@ -1,11 +1,11 @@
 #include "move.hpp"
 
-Move make_move(int from, int to, int type) {
+Move make_move(int from, int to, MoveType type, bool capture) {
   Move move;
-  move.en_passant = 0;
+  move.move_type = type;
   move.from = from;
   move.to = to;
-  move.promo = type;
+  move.capture = capture;
   return move;
 }
 char get_char(int location) { return 'a' + (location % 8); }
@@ -19,14 +19,12 @@ void print_sq(char *move, int location, int push) {
 void print_move(char *move_str, Move *move) {
   print_sq(move_str, move->from, 0);
   print_sq(move_str, move->to, 2);
-  if (move->promo == QUEEN_PROMO) move_str[4] = 'q';
-  if (move->promo == ROOK_PROMO) move_str[4] = 'r';
-  if (move->promo == BISHOP_PROMO) move_str[4] = 'b';
-  if (move->promo == KNIGHT_PROMO) move_str[4] = 'n';
-  if (move->promo == NORMAL_MOVE || move->promo == CASTLING)
-    move_str[4] = '\0';
-  else
-    move_str[5] = '\0';
+  move_str[4] = '\0';
+  if (move->move_type == MoveType::kQueenPromo) move_str[4] = 'q';
+  if (move->move_type == MoveType::kRookPromo) move_str[4] = 'r';
+  if (move->move_type == MoveType::kBishopPromo) move_str[4] = 'b';
+  if (move->move_type == MoveType::kKnightPromo) move_str[4] = 'n';
+  if (move_str[4] != '\0') move_str[5] = '\0';
 }
 
 int get_sq(char *string, int index) {

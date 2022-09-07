@@ -3,6 +3,7 @@ project(chess VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 17)
 enable_testing()
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -Wextra -flto")
+set(CMAKE_CXX_FLAGS_DEBUG, "-g")
 
 file(GLOB move CONFIGURE_DEPENDS
         "move/*")
