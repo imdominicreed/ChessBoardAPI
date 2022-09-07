@@ -19,20 +19,6 @@
 static const int pawn_vector[] = {8, 16, 7, 9};
 struct Move;
 
-enum {
-  NULL_MOVE = 0,
-  NORMAL_MOVE,
-  EN_PASSANT,
-  CASTLING,
-  QUEEN_PROMO,
-  ROOK_PROMO,
-  BISHOP_PROMO,
-  KNIGHT_PROMO,
-  LONG_CASTLE = 2,
-  SHORT_CASTLE = 1,
-  BLACK = 2
-};
-
 struct Zorbist {
   unsigned long long table[64][12];
   unsigned long long turn;
