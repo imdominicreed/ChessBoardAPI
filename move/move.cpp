@@ -39,9 +39,9 @@ int str_cmp(char *string1, char *string2) {
 }
 
 /** returns move from string */
-Move move_from_str(Board board, char string[5]) {
+Move Board::move_from_str(char string[5]) {
   Move move_list[256];
-  int moves = get_move_list(&board, move_list);
+  int moves = get_move_list(move_list);
   char holder[6];
   for (int i = 0; i < moves; i++) {
     print_move(holder, &move_list[i]);

@@ -29,7 +29,6 @@ struct Move {
   bool capture;
 };
 
-Move move_from_str(Board board, char string[5]);
 Move make_move(int from, int to, MoveType type, bool capture);
 void print_move(char move_str[5], Move *move);
 int cmp_move(const void *a, const void *b);

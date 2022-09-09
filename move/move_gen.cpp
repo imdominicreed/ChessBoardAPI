@@ -1,9 +1,9 @@
 #include "move.hpp"
 
-bitboard get_king(Board *board, int white) {
-  bitboard pieces = board->black_pieces | board->white_pieces;
-  pieces &= ~(board->pawns | board->bishops | board->rooks | board->knights);
-  pieces &= ~(!white ? board->white_pieces : board->black_pieces);
+bitboard Board::get_king(int white) {
+  bitboard pieces = black_pieces | white_pieces;
+  pieces &= ~(pawns | bishops | rooks | knights);
+  pieces &= ~(!white ? white_pieces : black_pieces);
   return pieces;
 }
 
@@ -66,20 +66,20 @@ bitboard get_black_pawn_attack(bitboard pieces) {
   return ret;
 }
 
-bitboard get_attack_board(Board *board, bool white) {
-  bitboard king_m = get_king(board, white);
+bitboard Board::get_attack_board(bool white) {
+  bitboard king_m = get_king(white);
   int k;
   POP_BSF(k, king_m);
   bitboard attacks = get_king_attacks(k);
-  bitboard my_pieces = white ? board->white_pieces : board->black_pieces;
-  bitboard all_pieces = board->black_pieces | board->white_pieces;
-  attacks |= get_rooks_attack(my_pieces & board->rooks, all_pieces);
-  attacks |= get_bishop_attack(my_pieces & board->bishops, all_pieces);
-  attacks |= get_knight_attack(my_pieces & board->knights);
+  bitboard my_pieces = white ? white_pieces : black_pieces;
+  bitboard all_pieces = black_pieces | white_pieces;
+  attacks |= get_rooks_attack(my_pieces & rooks, all_pieces);
+  attacks |= get_bishop_attack(my_pieces & bishops, all_pieces);
+  attacks |= get_knight_attack(my_pieces & knights);
   if (white)
-    attacks |= get_white_pawn_attack(my_pieces & board->pawns);
+    attacks |= get_white_pawn_attack(my_pieces & pawns);
   else
-    attacks |= get_black_pawn_attack(my_pieces & board->pawns);
+    attacks |= get_black_pawn_attack(my_pieces & pawns);
   return attacks;
 }
 
@@ -191,7 +191,7 @@ void get_white_castling_moves(Board *board, Move *move_list, int index,
   bitboard possible_sq = 0b1100000ULL;
   bitboard check_sq = 0b01100000ULL;
   bitboard pieces = board->black_pieces | board->white_pieces;
-  bitboard op_attacks = get_attack_board(board, false);
+  bitboard op_attacks = board->get_attack_board(false);
   if ((castleBit & board->castling) && !((mask | check_sq) & op_attacks) &&
       !(pieces & possible_sq)) {
     move_list[*moveIndex] =
@@ -216,7 +216,7 @@ void get_black_castling_moves(Board *board, Move *move_list, int index,
   bitboard possible_sq = 0x6000000000000000ULL;
   bitboard check_sq = possible_sq;
   bitboard pieces = board->black_pieces | board->white_pieces;
-  bitboard op_attacks = get_attack_board(board, true);
+  bitboard op_attacks = board->get_attack_board(true);
   if ((castleBit & board->castling) && !((mask | check_sq) & op_attacks) &&
       !(pieces & possible_sq)) {
     move_list[*moveIndex] =
@@ -246,13 +246,13 @@ int get_moves(Move move_list[], bitboard attacks, int src, bitboard pieces,
   return 1;
 }
 
-int get_move_list(Board *board, Move *move_list) {
-  if (!get_king(board, board->white)) return -1;
-  bitboard all_pieces = board->white_pieces | board->black_pieces;
-  bitboard king = get_king(board, !board->white);
-  bitboard mypieces = board->white ? board->white_pieces : board->black_pieces;
+int Board::get_move_list(Move *move_list) {
+  if (!get_king(white)) return -1;
+  bitboard all_pieces = white_pieces | black_pieces;
+  bitboard king = get_king(!white);
+  bitboard mypieces = white ? white_pieces : black_pieces;
   int list_index = 0;
-  bitboard pieces = mypieces & board->bishops;
+  bitboard pieces = mypieces & bishops;
   int src;
   while (pieces) {
     POP_BSF(src, pieces);
@@ -261,14 +261,14 @@ int get_move_list(Board *board, Move *move_list) {
     get_moves(move_list, ~mypieces & get_bishop_board(src, all_pieces), src,
               all_pieces, &list_index);
   }
-  pieces = mypieces & board->rooks;
+  pieces = mypieces & rooks;
   while (pieces) {
     POP_BSF(src, pieces);
     bitboard mask = ~mypieces & get_rook_board(src, all_pieces);
     if (mask & king) return -1;
     get_moves(move_list, mask, src, all_pieces, &list_index);
   }
-  pieces = mypieces & board->knights;
+  pieces = mypieces & knights;
   while (pieces) {
     POP_BSF(src, pieces);
     bitboard mask = ~mypieces & get_knight_attacks(src);
@@ -276,28 +276,27 @@ int get_move_list(Board *board, Move *move_list) {
     get_moves(move_list, ~mypieces & mask, src, all_pieces, &list_index);
   }
 
-  pieces = mypieces & board->pawns;
+  pieces = mypieces & pawns;
   bitboard op_pieces = ~mypieces & all_pieces;
   while (pieces) {
     POP_BSF(src, pieces);
     bitboard attacks =
-        board->white
-            ? get_white_pawn_moves(all_pieces, op_pieces, board->en_passant,
-                                   move_list, src, &list_index)
-            : get_black_pawn_moves(all_pieces, op_pieces, board->en_passant,
-                                   move_list, src, &list_index);
+        white ? get_white_pawn_moves(all_pieces, op_pieces, en_passant,
+                                     move_list, src, &list_index)
+              : get_black_pawn_moves(all_pieces, op_pieces, en_passant,
+                                     move_list, src, &list_index);
     if (attacks & king) return -1;
   }
 
-  pieces = get_king(board, board->white);
+  pieces = get_king(white);
   src = LSB(pieces);
   POP_BSF(src, pieces);
   bitboard mask = ~mypieces & get_king_attacks(src);
   if (mask & king) return -1;
   get_moves(move_list, mask, src, all_pieces, &list_index);
-  if (board->white)
-    get_white_castling_moves(board, move_list, src, &list_index);
+  if (white)
+    get_white_castling_moves(this, move_list, src, &list_index);
   else
-    get_black_castling_moves(board, move_list, src, &list_index);
+    get_black_castling_moves(this, move_list, src, &list_index);
   return list_index;
 }

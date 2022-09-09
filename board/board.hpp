@@ -37,10 +37,21 @@ struct Board {
   unsigned long long en_passant;
   int castling;
   bool white;
-};
 
-std::string printBoard(Board *board);
-void start_board(Board *board);
-Board do_move(Move *move, Board board);
-Board *import_fen(char *str);
-bool in_check(Board *board);
+ public:
+  std::string printBoard();
+  void start_board();
+  Board do_move(Move *move);
+  int get_move_list(Move *move_list);
+  bool in_check();
+  bitboard get_king(int white);
+  bitboard get_attack_board(bool white);
+  char get_char_sq(int square);
+  void update_hash(int from, Piece piece);
+  void make_empty_square(unsigned long long mask);
+  void do_black_castle(int rook_src, int rook_dst, int king_src, int king_dst);
+  void do_white_castle(int rook_src, int rook_dst, int king_src, int king_dst);
+  void remove_castle(Move *move);
+  Move move_from_str(char string[5]);
+};
+Board import_fen(char *str);
