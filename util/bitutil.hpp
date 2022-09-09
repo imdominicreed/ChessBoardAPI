@@ -22,6 +22,14 @@ static const bitboard SEVENTH_ROW = 0x00FF000000000000;
 static const bitboard SECOND_ROW = 0x000000000000FF00;
 static const bitboard FIRST_ROW = 0xFF;
 static const bitboard LAST_ROW = 0xFF00000000000000;
+enum Piece {
+  Pawn,
+  Bishop,
+  Queen,
+  Rook,
+  King,
+  Knight,
+};
 enum Square {
   A1,
   B1,
