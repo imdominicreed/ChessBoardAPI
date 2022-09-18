@@ -39,19 +39,21 @@ struct Board {
   bool white;
 
  public:
-  std::string printBoard();
-  void start_board();
-  Board do_move(Move *move);
-  int get_move_list(Move *move_list);
-  bool in_check();
-  bitboard get_king(int white);
-  bitboard get_attack_board(bool white);
-  char get_char_sq(int square);
-  void update_hash(int from, Piece piece);
-  void make_empty_square(unsigned long long mask);
-  void do_black_castle(int rook_src, int rook_dst, int king_src, int king_dst);
-  void do_white_castle(int rook_src, int rook_dst, int king_src, int king_dst);
-  void remove_castle(Move *move);
-  Move move_from_str(char string[5]);
+  std::string toString();
+  void startBoard();
+  Board doMove(Move *move);
+  int getMoveList(Move *move_list);
+  bool inCheck();
+  bitboard getKing(int white);
+  bitboard getAttackBoard(bool white);
+  char getCharSq(int square);
+  void updateHash(int from, Piece piece, bool color);
+  void makeEmptySquare(unsigned long long mask);
+  void doBlackCastle(int rook_src, int rook_dst, int king_src, int king_dst);
+  void doWhiteCastle(int rook_src, int rook_dst, int king_src, int king_dst);
+  void removeCastle(Move *move);
+  Move moveFromStr(char string[5]);
+  void updateMoveHash(int src, int dst, Piece piece);
+  Piece getPieceType(int sq);
 };
 Board import_fen(char *str);

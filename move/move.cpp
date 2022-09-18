@@ -11,20 +11,14 @@ Move make_move(int from, int to, MoveType type, bool capture) {
 char get_char(int location) { return 'a' + (location % 8); }
 int get_rank(int location) { return 1 + location / 8; }
 
-void print_sq(char *move, int location, int push) {
-  move[push + 0] = ('a' + (location % 8));
-  move[push + 1] = '1' + (location / 8);
-}
-
-void print_move(char *move_str, Move *move) {
-  print_sq(move_str, move->from, 0);
-  print_sq(move_str, move->to, 2);
-  move_str[4] = '\0';
-  if (move->move_type == MoveType::kQueenPromo) move_str[4] = 'q';
-  if (move->move_type == MoveType::kRookPromo) move_str[4] = 'r';
-  if (move->move_type == MoveType::kBishopPromo) move_str[4] = 'b';
-  if (move->move_type == MoveType::kKnightPromo) move_str[4] = 'n';
-  if (move_str[4] != '\0') move_str[5] = '\0';
+std::string Move::toString() {
+  std::string ret;
+  ret += get_char(from) + get_rank(from) + get_char(to) + get_rank(to);
+  if (move_type == MoveType::kQueenPromo) ret += 'q';
+  if (move_type == MoveType::kRookPromo) ret += 'r';
+  if (move_type == MoveType::kBishopPromo) ret += 'b';
+  if (move_type == MoveType::kKnightPromo) ret += 'n';
+  return ret;
 }
 
 int get_sq(char *string, int index) {
@@ -39,13 +33,12 @@ int str_cmp(char *string1, char *string2) {
 }
 
 /** returns move from string */
-Move Board::move_from_str(char string[5]) {
+Move Board::moveFromStr(char string[5]) {
   Move move_list[256];
-  int moves = get_move_list(move_list);
-  char holder[6];
+  int moves = getMoveList(move_list);
   for (int i = 0; i < moves; i++) {
-    print_move(holder, &move_list[i]);
-    if (str_cmp(string, holder)) return move_list[i];
+    if (str_cmp(string, (char *)move_list[i].toString().c_str()))
+      return move_list[i];
   }
   // if this occurs it is an error
   return move_list[0];

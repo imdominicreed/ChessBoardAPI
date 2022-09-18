@@ -27,9 +27,11 @@ struct Move {
   int to;
   MoveType move_type;
   bool capture;
+
+ public:
+  std::string toString();
 };
 
 Move make_move(int from, int to, MoveType type, bool capture);
-void print_move(char move_str[5], Move *move);
 int cmp_move(const void *a, const void *b);
 int get_sq(char *string, int index);
