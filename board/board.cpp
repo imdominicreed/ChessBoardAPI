@@ -29,8 +29,9 @@ char* strrev(char* str) {
   }
   return str;
 }
+
 Board import_fen(char* str) {
-  Board ret = {0};
+  Board ret = {};
   bitboard mask = 1ULL << 63;
   char* copy = strdup(str);
   const char del[2] = "/";
@@ -83,7 +84,7 @@ Board import_fen(char* str) {
   ret.key = 0;
   return ret;
 }
-void Board::make_empty_square(unsigned long long mask) {
+void Board::makeEmptySquare(unsigned long long mask) {
   white_pieces &= ~mask;
   black_pieces &= ~mask;
   rooks &= ~mask;
@@ -92,45 +93,86 @@ void Board::make_empty_square(unsigned long long mask) {
   knights &= ~mask;
 }
 
-void Board::update_hash(int from, Piece piece) { key ^= z.table[from][piece]; }
+void Board::updateHash(int from, Piece piece, bool color) {
+  key ^= z.table[from][piece + (color ? 0 : 6)];
+}
 
 void move_piece(unsigned long long* board, int from, int to) {
   *board &= ~(1ULL << from);
   *board |= 1ULL << to;
 }
 
-void Board::do_black_castle(int rook_src, int rook_dst, int king_src,
-                            int king_dst) {
+void Board::doBlackCastle(int rook_src, int rook_dst, int king_src,
+                          int king_dst) {
   move_piece(&black_pieces, king_src, king_dst);
   move_piece(&rooks, rook_src, rook_dst);
   move_piece(&black_pieces, rook_src, rook_dst);
 }
 
-void Board::do_white_castle(int rook_src, int rook_dst, int king_src,
-                            int king_dst) {
+void Board::doWhiteCastle(int rook_src, int rook_dst, int king_src,
+                          int king_dst) {
   move_piece(&white_pieces, king_src, king_dst);
   move_piece(&rooks, rook_src, rook_dst);
   move_piece(&white_pieces, rook_src, rook_dst);
 }
 
-void Board::remove_castle(Move* move) {
+void Board::removeCastle(Move* move) {
   if (move->to == Square::A1) castling &= 0b1101;
   if (move->to == Square::H1) castling &= 0b1110;
   if (move->to == Square::A8) castling &= 0b0111;
   if (move->to == Square::H8) castling &= 0b1011;
 }
 
-Board Board::do_move(Move* move) {
+void Board::updateMoveHash(int src, int dst, Piece piece) {
+  updateHash(src, piece, white);
+  updateHash(dst, piece, white);
+}
+
+Piece Board::getPieceType(int sq) {
+  bitboard mask = 1ULL << sq;
+  if (pawns & mask) return Piece::Pawn;
+  if (knights & mask) return Piece::Knight;
+  if (rooks & mask) return bishops & mask ? Piece::Queen : Piece::Rook;
+  if (bishops & mask) return Piece::Bishop;
+  return Piece::King;
+}
+
+Board Board::doMove(Move* move) {
   Board board = *this;
+  board.key ^= z.turn;
   bitboard from = 1ULL << move->from;
   bitboard to = 1ULL << move->to;
   bitboard* pieces = board.white ? &board.white_pieces : &board.black_pieces;
   if (move->move_type == MoveType::kNormalMove) {
-    board.make_empty_square(to);
-    if (from & board.pawns) move_piece(&board.pawns, move->from, move->to);
-    if (from & board.bishops) move_piece(&board.bishops, move->from, move->to);
-    if (from & board.rooks) move_piece(&board.rooks, move->from, move->to);
-    if (from & board.knights) move_piece(&board.knights, move->from, move->to);
+    // Handling capturing!
+    if (move->capture) {
+      board.updateHash(move->to, getPieceType(move->to), !white);
+      board.makeEmptySquare(to);
+    }
+
+    if (from & board.pawns) {
+      board.updateMoveHash(move->from, move->to, Piece::Pawn);
+      move_piece(&board.pawns, move->from, move->to);
+
+    } else if (from & board.bishops && from & board.rooks) {
+      board.updateMoveHash(move->from, move->to, Piece::Queen);
+      move_piece(&board.bishops, move->from, move->to);
+      move_piece(&board.rooks, move->from, move->to);
+
+    } else if (from & board.bishops) {
+      board.updateMoveHash(move->from, move->to, Piece::Bishop);
+      move_piece(&board.bishops, move->from, move->to);
+
+    } else if (from & board.rooks) {
+      board.updateMoveHash(move->from, move->to, Piece::Rook);
+      move_piece(&board.rooks, move->from, move->to);
+
+    } else if (from & board.knights) {
+      board.updateMoveHash(move->from, move->to, Piece::Knight);
+      move_piece(&board.knights, move->from, move->to);
+    } else
+      updateHash(move->from, Piece::King, white);
+
     if (move->from == Square::E1) board.castling &= 0b1100;
     if (move->from == Square::E8) board.castling &= 0b11;
     if (move->from == Square::A1 || move->to == Square::A1)
@@ -141,8 +183,10 @@ Board Board::do_move(Move* move) {
       board.castling &= 0b0111;
     if (move->from == Square::H8 || move->to == Square::H8)
       board.castling &= 0b1011;
+
     move_piece(pieces, move->from, move->to);
   } else if (move->move_type == MoveType::kJumpPawnMove) {
+    updateMoveHash(move->from, move->to, Piece::Pawn);
     move_piece(&board.pawns, move->from, move->to);
     move_piece(pieces, move->from, move->to);
     board.en_passant = board.white ? from : to;
@@ -150,63 +194,89 @@ Board Board::do_move(Move* move) {
     board.en_passant <<= 8;
     return board;
   } else if (move->move_type == MoveType::kBlackLongCastle) {
-    board.do_black_castle(56, 59, 60, 58);
+    updateMoveHash(56, 59, Piece::Rook);
+    updateMoveHash(60, 58, Piece::King);
+
+    board.doBlackCastle(56, 59, 60, 58);
     board.castling &= 0b11;
   } else if (move->move_type == MoveType::kBlackShortCastle) {
-    board.do_black_castle(63, 61, 60, 62);
+    updateMoveHash(53, 51, Piece::Rook);
+    updateMoveHash(60, 62, Piece::King);
+
+    board.doBlackCastle(63, 61, 60, 62);
     board.castling &= 0b11;
   } else if (move->move_type == MoveType::kWhiteLongCastle) {
-    board.do_white_castle(0, 3, 4, 2);
+    updateMoveHash(0, 3, Piece::Rook);
+    updateMoveHash(4, 2, Piece::King);
+
+    board.doWhiteCastle(0, 3, 4, 2);
     board.castling &= 0b1100;
   } else if (move->move_type == MoveType::kWhiteShortCastle) {
-    board.do_white_castle(7, 5, 4, 6);
+    updateMoveHash(7, 5, Piece::Rook);
+    updateMoveHash(4, 6, Piece::King);
+
+    board.doWhiteCastle(7, 5, 4, 6);
     board.castling &= 0b1100;
   } else if (move->move_type == MoveType::kEnPassant) {
     if (board.white)
       board.en_passant >>= 8;
     else
       board.en_passant <<= 8;
-    board.make_empty_square(board.en_passant);
+    board.makeEmptySquare(board.en_passant);
+    updateHash(move->to, Piece::Pawn, !white);
 
+    updateMoveHash(move->from, move->to, Piece::Pawn);
     move_piece(&board.pawns, move->from, move->to);
     move_piece(pieces, move->from, move->to);
   } else if (move->move_type == MoveType::kQueenPromo) {
-    board.make_empty_square(from);
-    board.remove_castle(move);
+    updateHash(move->from, Piece::Pawn, white);
+    updateHash(move->to, Piece::Queen, white);
+
+    board.makeEmptySquare(from);
+    board.removeCastle(move);
 
     if (move->capture) {
-      board.make_empty_square(to);
+      board.makeEmptySquare(to);
     }
 
     *pieces |= 1ULL << move->to;
     board.bishops |= 1ULL << move->to;
     board.rooks |= 1ULL << move->to;
   } else if (move->move_type == MoveType::kKnightPromo) {
-    board.make_empty_square(from);
-    board.remove_castle(move);
+    updateHash(move->from, Piece::Pawn, white);
+    updateHash(move->to, Piece::Knight, white);
+
+    board.makeEmptySquare(from);
+    board.removeCastle(move);
 
     if (move->capture) {
-      board.make_empty_square(to);
+      board.makeEmptySquare(to);
     }
 
     *pieces |= to;
     board.knights |= to;
   } else if (move->move_type == MoveType::kBishopPromo) {
-    board.make_empty_square(from);
-    board.remove_castle(move);
+    updateHash(move->from, Piece::Pawn, white);
+    updateHash(move->to, Piece::Bishop, white);
+
+    board.makeEmptySquare(from);
+    board.removeCastle(move);
 
     if (move->capture) {
-      board.make_empty_square(to);
+      board.makeEmptySquare(to);
     }
 
     *pieces |= 1ULL << move->to;
     board.bishops |= 1ULL << move->to;
   } else if (move->move_type == MoveType::kRookPromo) {
-    board.make_empty_square(from);
-    board.remove_castle(move);
+    updateHash(move->from, Piece::Pawn, white);
+    updateHash(move->to, Piece::Rook, white);
+
+    board.makeEmptySquare(from);
+    board.removeCastle(move);
 
     if (move->capture) {
-      board.make_empty_square(to);
+      board.makeEmptySquare(to);
     }
 
     *pieces |= 1ULL << move->to;
@@ -216,9 +286,10 @@ Board Board::do_move(Move* move) {
   board.en_passant = 0;
   return board;
 }
+
 void mirror(bitboard* board, int shift) { *board |= (*board << shift); }
 
-void Board::start_board() {
+void Board::startBoard() {
   init_tables();
   rooks = 0b10001001;
   mirror(&rooks, 56);
@@ -235,7 +306,7 @@ void Board::start_board() {
   key = 0;
   en_passant = 0;
 }
-char Board::get_char_sq(int square) {
+char Board::getCharSq(int square) {
   bitboard mask = 1ULL << square;
   if (!(mask & (white_pieces | black_pieces))) return '-';
   char letter;
@@ -254,8 +325,9 @@ char Board::get_char_sq(int square) {
   if (mask & white_pieces) letter -= 32;
   return letter;
 }
-bool Board::in_check() { return get_attack_board(white) & get_king(!white); }
-std::string Board::printBoard() {
+bool Board::inCheck() { return getAttackBoard(white) & getKing(!white); }
+
+std::string Board::toString() {
   std::string s;
   std::string rev;
   for (int i = 0; i <= 64; ++i) {
@@ -264,9 +336,8 @@ std::string Board::printBoard() {
       s += rev + '\n';
       rev = "";
     }
-    rev += get_char_sq(i);
+    rev += getCharSq(i);
     rev += ' ';
   }
-  s += "castling" + std::to_string(castling) + '\n';
   return s;
 }
