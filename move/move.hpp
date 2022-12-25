@@ -30,6 +30,10 @@ struct Move {
 
  public:
   std::string toString();
+  bool operator==(const Move m) {
+    return from == m.from && to == m.to && move_type == m.move_type &&
+           capture == m.capture;
+  }
 };
 
 Move make_move(int from, int to, MoveType type, bool capture);

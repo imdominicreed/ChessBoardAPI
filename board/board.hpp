@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <vector>
 
 #include "../magic/magic.hpp"
 #include "../move/move.hpp"
@@ -22,6 +23,9 @@ struct Move;
 struct Zorbist {
   unsigned long long table[64][12];
   unsigned long long turn;
+  unsigned long long en_passant[8];
+  unsigned long long castling[16];
+
   unsigned long long random();
   Zorbist();
 };
@@ -54,6 +58,9 @@ struct Board {
   void removeCastle(Move *move);
   Move moveFromStr(char string[5]);
   void updateMoveHash(int src, int dst, Piece piece);
+  void updateEnpassantHash(int src);
   Piece getPieceType(int sq);
+  bool operator==(const Board);
+  bool operator!=(const Board);
 };
 Board import_fen(char *str);
