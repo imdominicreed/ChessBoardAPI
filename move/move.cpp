@@ -1,5 +1,7 @@
 #include "move.hpp"
 
+#include <sstream>
+
 Move make_move(int from, int to, MoveType type, bool capture) {
   Move move;
   move.move_type = type;
@@ -12,13 +14,14 @@ char get_char(int location) { return 'a' + (location % 8); }
 int get_rank(int location) { return 1 + location / 8; }
 
 std::string Move::toString() {
-  std::string ret;
-  ret += get_char(from) + get_rank(from) + get_char(to) + get_rank(to);
-  if (move_type == MoveType::kQueenPromo) ret += 'q';
-  if (move_type == MoveType::kRookPromo) ret += 'r';
-  if (move_type == MoveType::kBishopPromo) ret += 'b';
-  if (move_type == MoveType::kKnightPromo) ret += 'n';
-  return ret;
+  std::stringstream s;
+
+  s << get_char(from) << get_rank(from) << get_char(to) << get_rank(to);
+  if (move_type == MoveType::kQueenPromo) s << 'q';
+  if (move_type == MoveType::kRookPromo) s << 'r';
+  if (move_type == MoveType::kBishopPromo) s << 'b';
+  if (move_type == MoveType::kKnightPromo) s << 'n';
+  return s.str();
 }
 
 int get_sq(char *string, int index) {
