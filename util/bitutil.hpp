@@ -2,8 +2,8 @@
 #pragma once
 #include <cstdint>
 
-#define bitboard unsigned long long
-#define Move unsigned short
+typedef uint64_t bitboard;
+typedef uint16_t Move;
 
 #define BIT(sq) (1ULL << (sq))
 #define LSB(x) (__builtin_ctzll(x))
