@@ -2,7 +2,7 @@
 #include "../util/bitutil.hpp"
 #include "rays.hpp"
 #include "stdio.h"
-#define bitboard unsigned long long
+#define bitboard uint64_t
 
 static const bitboard ROOK_MAGIC[64] = {
     0xa8002c000108020ULL,  0x6c00049b0002001ULL,  0x100200010090040ULL,
