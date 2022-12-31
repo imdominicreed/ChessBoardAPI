@@ -137,6 +137,7 @@ void Board::updateMoveHash(int src, int dst, Piece piece) {
 
 Piece Board::getPieceType(int sq) {
   bitboard mask = 1ULL << sq;
+  if ((pawns & (white_pieces | black_pieces)) == 0) return Piece::None;
   if (pawns & mask) return Piece::Pawn;
   if (knights & mask) return Piece::Knight;
   if (rooks & mask) return bishops & mask ? Piece::Queen : Piece::Rook;
