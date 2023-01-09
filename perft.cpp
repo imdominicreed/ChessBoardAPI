@@ -8,42 +8,44 @@
 #include "move/move_gen.hpp"
 
 int perft_helper(Board* board, int depth) {
-  Move move_list[256];
-  int n_moves, i;
   int nodes = 0;
-  n_moves = board->getMoveList(move_list);
-  if (n_moves < 0) {
+  Move move_list[256];
+
+  Move* curr = move_list;
+  Move* end = board->getMoveList(move_list);
+  if (end == nullptr) {
     return 0;
   }
   if (depth == 0) return 1;
-  for (i = 0; i < n_moves; i++) {
-    Board next = board->doMove(&move_list[i]);
+  while (curr != end) {
+    Board next = board->doMove(*curr);
     if (!next.inCheck()) nodes += perft_helper(&next, depth - 1);
+    curr++;
   }
   return nodes;
 }
+
 int perft(Board board, int depth) {
   Move move_list[256];
-  int i = 0;
-  int n_moves = board.getMoveList(move_list);
-  //   qsort(move_list, n_moves, sizeof(Move), cmp_move);
+  Move* start = move_list;
+  Move* end = board.getMoveList(move_list);
   int nodes = 0;
-  while (i != n_moves) {
-    Board pos = board.doMove(&move_list[i]);
+  while (end != start) {
+    Board pos = board.doMove(*start);
     if (pos.inCheck()) {
-      i++;
+      start++;
       continue;
     }
     int curr_nodes = perft_helper(&pos, depth);
-    std::string move_str = move_list[i].toString();
+    std::string move_str = to_string(*start);
     printf("%s", move_str.c_str());
     printf(": %d\n", curr_nodes);
     nodes += curr_nodes;
-
-    i++;
+    start++;
   }
   return nodes;
 }
+
 void perftIO() {
   char move_str[1001];
   printf("Enter \"fen position {fen} go perft {depth}\"\n");
@@ -58,7 +60,7 @@ void perftIO() {
   scanf("%s", move_str);
   while (move_str[0] != 'g' || move_str[1] != 'o') {
     Move move = board.moveFromStr(move_str);
-    board = board.doMove(&move);
+    board = board.doMove(move);
     scanf("%s", move_str);
   }
   printf("print something random then depth.\n");

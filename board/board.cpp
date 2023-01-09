@@ -53,18 +53,35 @@ Board import_fen(char* str) {
       } else {
         mask <<= 1;
         if (!mask) mask = 1;
-        if (row[i] == 'r' || row[i] == 'R' || row[i] == 'Q' || row[i] == 'q')
-          ret.rooks |= mask;
-        if (row[i] == 'b' || row[i] == 'B' || row[i] == 'Q' || row[i] == 'q')
-          ret.bishops |= mask;
-        else if (row[i] == 'n' || row[i] == 'N')
-          ret.knights |= mask;
-        else if (row[i] == 'p' || row[i] == 'P')
-          ret.pawns |= mask;
+        switch (row[i]) {
+          case 'r':
+          case 'R':
+            ret.pieceTypeBB[Rook] |= mask;
+            break;
+          case 'b':
+          case 'B':
+            ret.pieceTypeBB[Bishop] |= mask;
+            break;
+          case 'q':
+          case 'Q':
+            ret.pieceTypeBB[Queen] |= mask;
+            break;
+          case 'n':
+          case 'N':
+            ret.pieceTypeBB[Knight] |= mask;
+            break;
+          case 'k':
+          case 'K':
+            ret.pieceTypeBB[King] |= mask;
+            break;
+          case 'p':
+          case 'P':
+            ret.pieceTypeBB[Pawn] |= mask;
+        }
         if (row[i] - 'A' < 26)
-          ret.white_pieces |= mask;
+          ret.colorPiecesBB[WHITE] |= mask;
         else
-          ret.black_pieces |= mask;
+          ret.colorPiecesBB[BLACK] |= mask;
       }
     }
     mask >>= 8;
@@ -74,28 +91,26 @@ Board import_fen(char* str) {
   }
 
   char* turn = index(last, ' ') + 1;
-  ret.white = turn[0] == 'w';
+  ret.turn = turn[0] == 'w' ? WHITE : BLACK;
   char* castling = index(turn, ' ') + 1;
   int i = 0;
   while (castling[i] != ' ') {
-    if (castling[i] == 'k') ret.castling |= 0b0100;
-    if (castling[i] == 'K') ret.castling |= 0b0001;
-    if (castling[i] == 'Q') ret.castling |= 0b0010;
-    if (castling[i] == 'q') ret.castling |= 0b1000;
+    if (castling[i] == 'k') ret.castling |= BLACK_KING;
+    if (castling[i] == 'K') ret.castling |= WHITE_KING;
+    if (castling[i] == 'Q') ret.castling |= WHITE_QUEEN;
+    if (castling[i] == 'q') ret.castling |= BLACK_QUEEN;
     i++;
   }
   char* en = castling + i + 1;
-  if (en[0] != '-') ret.en_passant = (1ULL << get_sq(en, 0));
+  if (en[0] != '-')
+    ret.en_passant = 1ULL << (((en[0] - 'a') * 8) + (en[1] - '1'));
   ret.key = 0;
   return ret;
 }
-void Board::makeEmptySquare(unsigned long long mask) {
-  white_pieces &= ~mask;
-  black_pieces &= ~mask;
-  rooks &= ~mask;
-  pawns &= ~mask;
-  bishops &= ~mask;
-  knights &= ~mask;
+inline void Board::makeEmptySquare(bitboard mask, PieceType piece,
+                                   Color color) {
+  pieceTypeBB[piece] &= ~mask;
+  pieceTypeBB[color] &= ~mask;
 }
 
 void Board::updateHash(int from, Piece piece, bool color) {
@@ -104,248 +119,171 @@ void Board::updateHash(int from, Piece piece, bool color) {
 
 void Board::updateEnpassantHash(int src) { key ^= z.en_passant[src % 8]; }
 
-void move_piece(unsigned long long* board, int from, int to) {
-  *board &= ~(1ULL << from);
-  *board |= 1ULL << to;
+inline void Board::move_piece(int from, int to, PieceType piece) {
+  colorPiecesBB[turn] &= ~(1ULL << from);
+  colorPiecesBB[turn] |= 1ULL << to;
+  pieceTypeBB[piece] &= ~(1ULL << from);
+  pieceTypeBB[piece] |= 1ULL << to;
 }
 
-void Board::doBlackCastle(int rook_src, int rook_dst, int king_src,
-                          int king_dst) {
-  move_piece(&black_pieces, king_src, king_dst);
-  move_piece(&rooks, rook_src, rook_dst);
-  move_piece(&black_pieces, rook_src, rook_dst);
-}
+// void Board::updateMoveHash(int src, int dst, Piece piece) {
+//   updateHash(src, piece, white);
+//   updateHash(dst, piece, white);
+// }
 
-void Board::doWhiteCastle(int rook_src, int rook_dst, int king_src,
-                          int king_dst) {
-  move_piece(&white_pieces, king_src, king_dst);
-  move_piece(&rooks, rook_src, rook_dst);
-  move_piece(&white_pieces, rook_src, rook_dst);
-}
-
-void Board::removeCastle(Move* move) {
-  if (move->to == Square::A1) castling &= 0b1101;
-  if (move->to == Square::H1) castling &= 0b1110;
-  if (move->to == Square::A8) castling &= 0b0111;
-  if (move->to == Square::H8) castling &= 0b1011;
-}
-
-void Board::updateMoveHash(int src, int dst, Piece piece) {
-  updateHash(src, piece, white);
-  updateHash(dst, piece, white);
-}
-
-Piece Board::getPieceType(int sq) {
+PieceType Board::getPieceType(int sq) {
   bitboard mask = 1ULL << sq;
-  if ((pawns & (white_pieces | black_pieces)) == 0) return Piece::None;
-  if (pawns & mask) return Piece::Pawn;
-  if (knights & mask) return Piece::Knight;
-  if (rooks & mask) return bishops & mask ? Piece::Queen : Piece::Rook;
-  if (bishops & mask) return Piece::Bishop;
-  return Piece::King;
+  if (pieceTypeBB[Pawn] & mask) return Pawn;
+  if (pieceTypeBB[Knight] & mask) return Knight;
+  if (pieceTypeBB[Rook] & mask) return Rook;
+  if (pieceTypeBB[Queen] & mask) return Queen;
+  if (pieceTypeBB[Bishop] & mask) return Bishop;
+  return King;
 }
 
-Board Board::doMove(Move* move) {
+void Board::createPiece(int sq, PieceType piece) {
+  pieceTypeBB[piece] |= 1ULL << sq;
+  colorPiecesBB[turn] |= 1ULL << sq;
+}
+
+Board Board::doMove(Move move) {
   Board board = *this;
   board.key ^= z.turn;
-  if (board.en_passant) board.updateEnpassantHash(MSB(board.en_passant));
+  // if (board.en_passant) board.updateEnpassantHash(MSB(board.en_passant));
 
-  bitboard from = 1ULL << move->from;
-  bitboard to = 1ULL << move->to;
-  bitboard* pieces = board.white ? &board.white_pieces : &board.black_pieces;
-  int castling_before = board.castling;
-
-  if (move->move_type == MoveType::kNormalMove) {
-    // Handling capturing!
-    if (move->capture) {
-      board.updateHash(move->to, getPieceType(move->to), !white);
-      board.makeEmptySquare(to);
-    }
-
-    if (from & board.pawns) {
-      board.updateMoveHash(move->from, move->to, Piece::Pawn);
-      move_piece(&board.pawns, move->from, move->to);
-
-    } else if (from & board.bishops && from & board.rooks) {
-      board.updateMoveHash(move->from, move->to, Piece::Queen);
-      move_piece(&board.bishops, move->from, move->to);
-      move_piece(&board.rooks, move->from, move->to);
-
-    } else if (from & board.bishops) {
-      board.updateMoveHash(move->from, move->to, Piece::Bishop);
-      move_piece(&board.bishops, move->from, move->to);
-
-    } else if (from & board.rooks) {
-      board.updateMoveHash(move->from, move->to, Piece::Rook);
-      move_piece(&board.rooks, move->from, move->to);
-
-    } else if (from & board.knights) {
-      board.updateMoveHash(move->from, move->to, Piece::Knight);
-      move_piece(&board.knights, move->from, move->to);
-    } else
-      board.updateMoveHash(move->from, move->to, Piece::King);
-
-    if (move->from == Square::E1) board.castling &= 0b1100;
-    if (move->from == Square::E8) board.castling &= 0b11;
-    if (move->from == Square::A1 || move->to == Square::A1)
-      board.castling &= 0b1101;
-    if (move->from == Square::H1 || move->to == Square::H1)
-      board.castling &= 0b1110;
-    if (move->from == Square::A8 || move->to == Square::A8)
-      board.castling &= 0b0111;
-    if (move->from == Square::H8 || move->to == Square::H8)
-      board.castling &= 0b1011;
-
-    move_piece(pieces, move->from, move->to);
-  } else if (move->move_type == MoveType::kJumpPawnMove) {
-    board.updateMoveHash(move->from, move->to, Piece::Pawn);
-    move_piece(&board.pawns, move->from, move->to);
-    move_piece(pieces, move->from, move->to);
-    board.updateEnpassantHash(move->from);
-    board.en_passant = board.white ? from : to;
-    board.white = !board.white;
-    board.en_passant <<= 8;
-    return board;
-  } else if (move->move_type == MoveType::kBlackLongCastle) {
-    board.updateMoveHash(56, 59, Piece::Rook);
-    board.updateMoveHash(60, 58, Piece::King);
-
-    board.doBlackCastle(56, 59, 60, 58);
-    board.castling &= 0b11;
-  } else if (move->move_type == MoveType::kBlackShortCastle) {
-    board.updateMoveHash(53, 51, Piece::Rook);
-    board.updateMoveHash(60, 62, Piece::King);
-
-    board.doBlackCastle(63, 61, 60, 62);
-    board.castling &= 0b11;
-  } else if (move->move_type == MoveType::kWhiteLongCastle) {
-    board.updateMoveHash(0, 3, Piece::Rook);
-    board.updateMoveHash(4, 2, Piece::King);
-
-    board.doWhiteCastle(0, 3, 4, 2);
-    board.castling &= 0b1100;
-  } else if (move->move_type == MoveType::kWhiteShortCastle) {
-    board.updateMoveHash(7, 5, Piece::Rook);
-    board.updateMoveHash(4, 6, Piece::King);
-
-    board.doWhiteCastle(7, 5, 4, 6);
-    board.castling &= 0b1100;
-  } else if (move->move_type == MoveType::kEnPassant) {
-    if (board.white)
-      board.en_passant >>= 8;
-    else
-      board.en_passant <<= 8;
-    board.makeEmptySquare(board.en_passant);
-    board.updateHash(move->to, Piece::Pawn, !white);
-    updateEnpassantHash(move->from);
-
-    board.updateMoveHash(move->from, move->to, Piece::Pawn);
-    move_piece(&board.pawns, move->from, move->to);
-    move_piece(pieces, move->from, move->to);
-  } else if (move->move_type == MoveType::kQueenPromo) {
-    board.updateHash(move->from, Piece::Pawn, white);
-    board.updateHash(move->to, Piece::Queen, white);
-
-    board.makeEmptySquare(from);
-    board.removeCastle(move);
-
-    if (move->capture) {
-      board.updateHash(move->to, getPieceType(move->to), !white);
-      board.makeEmptySquare(to);
-    }
-
-    *pieces |= 1ULL << move->to;
-    board.bishops |= 1ULL << move->to;
-    board.rooks |= 1ULL << move->to;
-  } else if (move->move_type == MoveType::kKnightPromo) {
-    board.updateHash(move->from, Piece::Pawn, white);
-    board.updateHash(move->to, Piece::Knight, white);
-
-    board.makeEmptySquare(from);
-    board.removeCastle(move);
-
-    if (move->capture) {
-      board.updateHash(move->to, getPieceType(move->to), !white);
-      board.makeEmptySquare(to);
-    }
-
-    *pieces |= to;
-    board.knights |= to;
-  } else if (move->move_type == MoveType::kBishopPromo) {
-    board.updateHash(move->from, Piece::Pawn, white);
-    board.updateHash(move->to, Piece::Bishop, white);
-
-    board.makeEmptySquare(from);
-    board.removeCastle(move);
-
-    if (move->capture) {
-      board.updateHash(move->to, getPieceType(move->to), !white);
-      board.makeEmptySquare(to);
-    }
-
-    *pieces |= 1ULL << move->to;
-    board.bishops |= 1ULL << move->to;
-  } else if (move->move_type == MoveType::kRookPromo) {
-    board.updateHash(move->from, Piece::Pawn, white);
-    board.updateHash(move->to, Piece::Rook, white);
-
-    board.makeEmptySquare(from);
-    board.removeCastle(move);
-
-    if (move->capture) {
-      board.updateHash(move->to, getPieceType(move->to), !white);
-      board.makeEmptySquare(to);
-    }
-
-    *pieces |= 1ULL << move->to;
-    board.rooks |= 1ULL << move->to;
-  }
-
-  board.key ^= z.castling[board.castling ^ castling_before];
-  board.white = !board.white;
+  int to_sq = to(move);
+  int from_sq = from(move);
+  bitboard from_mask = 1ULL << from_sq;
+  bitboard to_mask = 1ULL << to_sq;
+  MoveType move_type = type(move);
+  int en_passant = board.en_passant;
   board.en_passant = 0;
+
+  switch (move_type) {
+    case Capture:
+      board.makeEmptySquare(to_mask, getPieceType(to_sq), (Color)~turn);
+      [[fallthrough]];
+    case QuietMove:
+      board.move_piece(from_sq, to_sq, getPieceType(from_sq));
+      // removes castling
+      if (from_sq == Square::E1) board.castling &= ~WHITE_CASTLING;
+      if (from_sq == Square::E8) board.castling &= ~BLACK_CASTLING;
+      if (from_sq == Square::A1 || to_sq == Square::A1)
+        board.castling &= ~WHITE_QUEEN;
+      if (from_sq == Square::H1 || to_sq == Square::H1)
+        board.castling &= ~WHITE_KING;
+      if (from_sq == Square::A8 || to_sq == Square::A8)
+        board.castling &= ~BLACK_QUEEN;
+      if (from_sq == Square::H8 || to_sq == Square::H8)
+        board.castling &= ~BLACK_KING;
+      break;
+
+    case DoublePawnPush:
+      board.move_piece(from_sq, to_sq, Pawn);
+      board.en_passant = turn == WHITE ? to_sq - 8 : to_sq + 8;
+      break;
+    case KingCastle:
+      board.move_piece(from_sq, to_sq, King);
+      board.move_piece(to_sq + 1, from_sq + 1, Rook);
+      break;
+    case QueenCastle:
+      board.move_piece(from_sq, to_sq, King);
+      board.move_piece(to_sq - 2, from_sq - 1, Rook);
+      break;
+
+    case EnpassantCapture:
+      board.makeEmptySquare(1ULL << en_passant, Pawn, (Color)~turn);
+      board.move_piece(from_sq, to_sq, Pawn);
+      break;
+
+    case KnightPromotionCapture:
+      board.makeEmptySquare(to_mask, board.getPieceType(to_sq), (Color)~turn);
+      [[fallthrough]];
+    case KnightPromotion:
+      board.makeEmptySquare(from_mask, Pawn, turn);
+      board.createPiece(to_sq, Knight);
+      break;
+
+    case QueenPromotionCapture:
+      board.makeEmptySquare(to_mask, board.getPieceType(to_sq), (Color)~turn);
+      [[fallthrough]];
+    case QueenPromotion:
+      board.makeEmptySquare(from_mask, Pawn, turn);
+      board.createPiece(to_sq, Queen);
+      break;
+
+    case RookPromotionCapture:
+      board.makeEmptySquare(to_mask, board.getPieceType(to_sq), (Color)~turn);
+      [[fallthrough]];
+    case RookPromotion:
+      board.makeEmptySquare(from_mask, Pawn, turn);
+      board.createPiece(to_sq, Rook);
+      break;
+
+    case BishopPromotionCapture:
+      board.makeEmptySquare(to_mask, board.getPieceType(to_sq), (Color)~turn);
+      [[fallthrough]];
+    case BishopPromotion:
+      board.makeEmptySquare(from_mask, Pawn, turn);
+      board.createPiece(to_sq, Bishop);
+      break;
+  }
   return board;
 }
 
-void mirror(bitboard* board, int shift) { *board |= (*board << shift); }
-
 void Board::startBoard() {
   init_tables();
-  rooks = 0b10001001;
-  mirror(&rooks, 56);
-  bishops = 0b00101100;
-  mirror(&bishops, 56);
-  knights = 0b01000010;
-  mirror(&knights, 56);
-  pawns = (0b11111111 << 8);
-  white_pieces = 0b11111111 | pawns;
-  mirror(&pawns, 40);
-  black_pieces = white_pieces << 48;
-  white = true;
+  pieceTypeBB[Rook] = 0b10001001;
+  pieceTypeBB[Rook] |= pieceTypeBB[Rook] << 56;
+
+  pieceTypeBB[Bishop] = 0b00101100;
+  pieceTypeBB[Bishop] |= pieceTypeBB[Bishop] << 56;
+
+  pieceTypeBB[Knight] = 0b01000010;
+  pieceTypeBB[Knight] |= pieceTypeBB[Knight] << 56;
+
+  pieceTypeBB[Pawn] = (0b11111111 << 8);
+  pieceTypeBB[Pawn] |= pieceTypeBB[Pawn] << 40;
+
+  colorPiecesBB[WHITE] = 0b11111111 | pieceTypeBB[Pawn];
+  colorPiecesBB[BLACK] = colorPiecesBB[WHITE] << 48;
+
+  turn = WHITE;
   castling = 0b1111;
   key = 0;
   en_passant = 0;
 }
 char Board::getCharSq(int square) {
   bitboard mask = 1ULL << square;
-  if (!(mask & (white_pieces | black_pieces))) return '-';
+  if (!(mask & (colorPiecesBB[WHITE] | colorPiecesBB[BLACK]))) return '-';
+
   char letter;
-  if ((mask & bishops) && (mask & rooks))
-    letter = 'q';
-  else if (mask & rooks)
-    letter = 'r';
-  else if (mask & bishops)
-    letter = 'b';
-  else if (mask & pawns)
-    letter = 'p';
-  else if (mask & knights)
-    letter = 'n';
-  else
-    letter = 'k';
-  if (mask & white_pieces) letter -= 32;
+  switch (getPieceType(square)) {
+    case Queen:
+      letter = 'q';
+      break;
+    case Rook:
+      letter = 'r';
+      break;
+    case Bishop:
+      letter = 'b';
+      break;
+    case Knight:
+      letter = 'n';
+      break;
+    case Pawn:
+      letter = 'p';
+      break;
+    case King:
+      letter = 'k';
+      break;
+    default:
+      break;
+  }
+  if (mask & colorPiecesBB[WHITE]) letter -= 32;
   return letter;
 }
-bool Board::inCheck() { return getAttackBoard(white) & getKing(!white); }
+bool Board::inCheck() { return getAttackBoard(turn) & getKing((Color)~turn); }
 
 std::string Board::toString() {
   std::string s;
@@ -359,16 +297,30 @@ std::string Board::toString() {
     rev += getCharSq(i);
     rev += ' ';
   }
-  s += white ? "White" : "Black";
+  s += turn == WHITE ? "White" : "Black";
   s += " to play!";
   return s;
 }
 
 bool Board::operator==(const Board b) {
-  return b.bishops == bishops && b.black_pieces == black_pieces &&
-         b.castling == castling && b.en_passant == en_passant &&
-         b.knights == knights && b.pawns == pawns && b.rooks == rooks &&
-         b.white == white && b.white_pieces == white_pieces;
+  for (int i = 0; i < NumPieces; i++) {
+    if (pieceTypeBB[i] != b.pieceTypeBB[i]) return false;
+  }
+  for (int i = 0; i < 2; i++) {
+    if (colorPiecesBB[i] != b.colorPiecesBB[i]) return false;
+  }
+  return true;
 }
 
 bool Board::operator!=(const Board b) { return !(*this == b); }
+
+Move Board::moveFromStr(std::string move) {
+  Move move_list[256];
+  Move* curr = move_list;
+  Move* end = getMoveList(move_list);
+  while (curr != end) {
+    if (move == to_string(*curr)) return *curr;
+    curr++;
+  }
+  return (Move)0;
+}

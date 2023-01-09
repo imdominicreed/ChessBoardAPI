@@ -3,7 +3,7 @@
 #include <cstdint>
 
 typedef uint64_t bitboard;
-typedef uint16_t Move;
+typedef unsigned short Move;
 
 #define BIT(sq) (1ULL << (sq))
 #define LSB(x) (__builtin_ctzll(x))

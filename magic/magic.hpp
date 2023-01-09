@@ -3,6 +3,12 @@
 #include "rays.hpp"
 #include "stdio.h"
 #define bitboard uint64_t
+static bitboard knight_mask[64];
+static bitboard king_mask[64];
+static bitboard bishop_mask[64];
+static bitboard rook_mask[64];
+static bitboard rook_table[64][4096];
+static bitboard bishop_table[64][1024];
 
 static const bitboard ROOK_MAGIC[64] = {
     0xa8002c000108020ULL,  0x6c00049b0002001ULL,  0x100200010090040ULL,
@@ -65,7 +71,19 @@ static const int BISHOP_INDEX_BITS[64] = {
 static const int KNIGHT_VECTOR[] = {6, -6, 10, -10, 15, -15, 17, -17};
 static const int KING_VECTOR[] = {1, -1, 8, -8, 9, -9, 7, -7};
 void init_tables();
-bitboard get_bishop_board(int sq, bitboard blockers);
-bitboard get_rook_board(int sq, bitboard blocker);
-bitboard get_king_attacks(int sq);
-bitboard get_knight_attacks(int sq);
+
+inline bitboard get_bishop_board(int sq, bitboard blockers) {
+  blockers &= bishop_mask[sq];
+  int key = (blockers * BISHOP_MAGIC[sq]) >> (64 - BISHOP_INDEX_BITS[sq]);
+  return bishop_table[sq][key];
+}
+
+inline bitboard get_bishop_attacks(int sq) { return bishop_mask[sq]; }
+inline bitboard get_rook_attacks(int sq) { return rook_mask[sq]; }
+inline bitboard get_knight_attacks(int sq) { return knight_mask[sq]; }
+inline bitboard get_king_attacks(int sq) { return king_mask[sq]; }
+inline bitboard get_rook_board(int sq, bitboard blockers) {
+  blockers &= rook_mask[sq];
+  int key = (blockers * ROOK_MAGIC[sq]) >> (64 - ROOK_INDEX_BITS[sq]);
+  return rook_table[sq][key];
+}

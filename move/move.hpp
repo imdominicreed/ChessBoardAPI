@@ -7,8 +7,6 @@
 #include "../board/board.hpp"
 #include "move_gen.hpp"
 
-struct Board;
-
 /**
  * Move:
  * 0-5 From
@@ -35,20 +33,20 @@ enum MoveType {
 
 inline Move make_move(int from, int to, MoveType type) {
   Move move = from;
-  move |= to << 0x111111;
+  move |= to << 6;
   move |= type;
   return move;
 }
 inline int from(Move m) { return m & 0b111111; }
 inline int to(Move m) { return (m >> 6) & 0b111111; }
-inline MoveType type(Move m) { return (MoveType)(m & 0b111111111111); }
-std::string get_sq(int sq) {
+inline MoveType type(Move m) { return (MoveType)(m & ~0b111111111111); }
+inline std::string get_sq(int sq) {
   std::stringstream s;
-  s << ('a' + (sq % 8));
-  s << ('1' + (sq / 8));
+  s << (char)('a' + (sq % 8));
+  s << (char)('1' + (sq / 8));
   return s.str();
 }
-std::string to_string(Move m) {
+inline std::string to_string(Move m) {
   std::stringstream s;
 
   s << get_sq(from(m)) << get_sq(to(m));

@@ -3,6 +3,3 @@
 #include "../magic/magic.hpp"
 #include "../move/move.hpp"
 #include "../util/bitutil.hpp"
-
-struct Move;
-struct Board;

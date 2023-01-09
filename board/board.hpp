@@ -12,13 +12,13 @@
 #include "../magic/magic.hpp"
 #include "../move/move.hpp"
 #include "../move/move_gen.hpp"
+#include "../util/bitutil.hpp"
 
 #define sliding_size 4
 #define jumping_size 8
 #define pawn_size 4
 
 static const int pawn_vector[] = {8, 16, 7, 9, 0};
-struct Move;
 
 struct Zorbist {
   uint64_t table[64][12];
@@ -66,27 +66,29 @@ struct Board {
   uint64_t key;
   bitboard pieceTypeBB[NumPieces];
   bitboard colorPiecesBB[2];
-  CastlingRights castling[NumCastling];
+  uint8_t castling;
   Color turn;
+  uint8_t en_passant;
 
- public:
+  inline void move_piece(int from, int to, PieceType piece);
   std::string toString();
   void startBoard();
   Board doMove(Move move);
-  int getMoveList(Move *move_list);
+  Move *getMoveList(Move *move_list);
   bool inCheck();
-  bitboard getKing(int white);
-  bitboard getAttackBoard(bool white);
+  bitboard getKing(Color turn);
+  bitboard getAttackBoard(Color turn);
   char getCharSq(int square);
   void updateHash(int from, Piece piece, bool color);
-  void makeEmptySquare(bitboard mask);
+  inline void makeEmptySquare(bitboard mask, PieceType piece, Color color);
   void doBlackCastle(int rook_src, int rook_dst, int king_src, int king_dst);
   void doWhiteCastle(int rook_src, int rook_dst, int king_src, int king_dst);
-  void removeCastle(Move *move);
-  Move moveFromStr(char string[5]);
+  void removeCastle(Move move);
+  Move moveFromStr(std::string move);
   void updateMoveHash(int src, int dst, Piece piece);
   void updateEnpassantHash(int src);
-  Piece getPieceType(int sq);
+  PieceType getPieceType(int sq);
+  void createPiece(int sq, PieceType piece);
   bool operator==(const Board);
   bool operator!=(const Board);
 };
