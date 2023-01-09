@@ -1,5 +1,12 @@
 #include "magic.hpp"
 
+bitboard knight_mask[64];
+bitboard king_mask[64];
+bitboard bishop_mask[64];
+bitboard rook_mask[64];
+bitboard rook_table[64][4096];
+bitboard bishop_table[64][1024];
+
 bitboard last_column(bitboard location) { return location & LAST_COLUMN; }
 bitboard first_column(bitboard location) { return location & FIRST_COLUMN; }
 bitboard second_column(bitboard location) { return location & SECOND_COLUMN; }
@@ -139,9 +146,25 @@ void init_bishop_magic() {
 void init_tables() {
   init_rays();
   lookup_table_jumping_setup(KNIGHT_VECTOR, knight_mask);
+  printf("test: %llu", knight_mask[1]);
   lookup_table_jumping_setup(KING_VECTOR, king_mask);
   lookup_rook_setup();
   lookup_bishop_setup();
   init_rook_magic();
   init_bishop_magic();
+}
+
+bitboard get_bishop_board(int sq, bitboard blockers) {
+  blockers &= bishop_mask[sq];
+  int key = (blockers * BISHOP_MAGIC[sq]) >> (64 - BISHOP_INDEX_BITS[sq]);
+  return bishop_table[sq][key];
+}
+bitboard get_bishop_attacks(int sq) { return bishop_mask[sq]; }
+bitboard get_rook_attacks(int sq) { return rook_mask[sq]; }
+bitboard get_knight_attacks(int sq) { return knight_mask[sq]; }
+bitboard get_king_attacks(int sq) { return king_mask[sq]; }
+bitboard get_rook_board(int sq, bitboard blockers) {
+  blockers &= rook_mask[sq];
+  int key = (blockers * ROOK_MAGIC[sq]) >> (64 - ROOK_INDEX_BITS[sq]);
+  return rook_table[sq][key];
 }
