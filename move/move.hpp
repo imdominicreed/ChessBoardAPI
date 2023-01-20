@@ -21,7 +21,7 @@ enum MoveType {
   QueenCastle,
   Capture,
   EnpassantCapture,
-  KnightPromotion,
+  KnightPromotion = 8,
   BishopPromotion,
   RookPromotion,
   QueenPromotion,
@@ -30,6 +30,8 @@ enum MoveType {
   RookPromotionCapture,
   QueenPromotionCapture,
 };
+
+
 
 inline Move make_move(int from, int to, MoveType type) {
   Move move = type;
@@ -40,6 +42,15 @@ inline Move make_move(int from, int to, MoveType type) {
 inline int from(Move m) { return m >> 10; }
 inline int to(Move m) { return (m >> 4) & 0b111111; }
 inline MoveType type(Move m) { return (MoveType)(m & 0b1111); }
+
+inline bool is_capture(Move m) {
+  return type(m) & 0b100; 
+}
+
+inline bool is_castle(Move m) {
+  return type(m) & 0b010;
+}
+
 inline std::string get_sq(int sq) {
   std::stringstream s;
   s << (char)('a' + (sq % 8));

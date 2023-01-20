@@ -103,7 +103,7 @@ Board import_fen(char* str) {
   }
   char* en = castling + i + 1;
   if (en[0] != '-')
-    ret.en_passant = 1ULL << (((en[0] - 'a') * 8) + (en[1] - '1'));
+    ret.en_passant = (en[0] - 'a') + ((en[1] - '1')*8);
   ret.key = 0;
   return ret;
 }
@@ -146,91 +146,140 @@ void Board::createPiece(int sq, PieceType piece) {
   colorPiecesBB[turn] |= 1ULL << sq;
 }
 
-Board Board::doMove(Move move) {
-  Board board = *this;
+void Board::undoMove(UndoMove move) {
+  int to_sq = to(move.move);
+  int from_sq = from(move.move);
+  MoveType move_type = type(move.move);
+
+  turn = (Color) (turn^1);
+  en_passant = move.en_passant_sq;
+  castling = move.castling_rights;
+
+  if(move_type >= KnightPromotion) {
+    makeEmptySquare(1ULL << to_sq, getPieceType(to_sq), turn);
+    createPiece(from_sq, Pawn);
+  } else if(is_castle(move.move)) {
+    move_piece(to_sq, from_sq, King);
+    move_piece(to_sq + (KingCastle == move_type ? -1 : 1), to_sq + (KingCastle == move_type ? 1 : -2), Rook);
+  } else {
+    move_piece(to_sq, from_sq, getPieceType(to_sq));
+  }
+
+  turn = (Color) (turn^1);
+
+  if(is_capture(move.move)) {
+    createPiece(move_type == EnpassantCapture ? to_sq + (BLACK == turn ? -8 : 8) : to_sq , move.captured_piece);
+  }
+    turn = (Color) (turn^1);
+
+}
+
+UndoMove Board::doMove(Move move) {
+  UndoMove undo;
+  undo.move = move;
+  undo.captured_piece = (PieceType) -1;
+  undo.castling_rights = castling;
+  undo.en_passant_sq = en_passant;
   // board.key ^= z.turn;
   // if (board.en_passant) board.updateEnpassantHash(MSB(board.en_passant));
-
   int to_sq = to(move);
   int from_sq = from(move);
   bitboard from_mask = 1ULL << from_sq;
   bitboard to_mask = 1ULL << to_sq;
   MoveType move_type = type(move);
-  int en_passant = board.en_passant;
-  board.en_passant = 0;
+  en_passant = 0;
+
+  if(is_capture(move)) {
+      if (to_sq == Square::A1)
+        castling &= ~WHITE_QUEEN;
+      else if (to_sq == Square::H1)
+        castling &= ~WHITE_KING;
+      else if (to_sq == Square::A8)
+        castling &= ~BLACK_QUEEN;
+      else if (to_sq == Square::H8)
+        castling &= ~BLACK_KING;
+  }
 
   switch (move_type) {
     case Capture:
-      board.makeEmptySquare(to_mask, getPieceType(to_sq), (Color)(turn^1));
+    {
+      PieceType capture_piece = getPieceType(to_sq);
+      undo.captured_piece = capture_piece;
+      makeEmptySquare(to_mask, capture_piece, (Color)(turn^1));
+    }
       [[fallthrough]];
     case QuietMove:
-      board.move_piece(from_sq, to_sq, getPieceType(from_sq));
+      move_piece(from_sq, to_sq, getPieceType(from_sq));
       // removes castling
-      if (from_sq == Square::E1) board.castling &= ~WHITE_CASTLING;
-      if (from_sq == Square::E8) board.castling &= ~BLACK_CASTLING;
-      if (from_sq == Square::A1 || to_sq == Square::A1)
-        board.castling &= ~WHITE_QUEEN;
-      if (from_sq == Square::H1 || to_sq == Square::H1)
-        board.castling &= ~WHITE_KING;
-      if (from_sq == Square::A8 || to_sq == Square::A8)
-        board.castling &= ~BLACK_QUEEN;
-      if (from_sq == Square::H8 || to_sq == Square::H8)
-        board.castling &= ~BLACK_KING;
+      if (from_sq == Square::E1) castling &= ~WHITE_CASTLING;
+      if (from_sq == Square::E8) castling &= ~BLACK_CASTLING;
+      if (from_sq == Square::A1)
+        castling &= ~WHITE_QUEEN;
+      if (from_sq == Square::H1)
+        castling &= ~WHITE_KING;
+      if (from_sq == Square::A8)
+        castling &= ~BLACK_QUEEN;
+      if (from_sq == Square::H8)
+        castling &= ~BLACK_KING;
       break;
 
     case DoublePawnPush:
-      board.move_piece(from_sq, to_sq, Pawn);
-      board.en_passant = turn == WHITE ? to_sq - 8 : to_sq + 8;
+      move_piece(from_sq, to_sq, Pawn);
+      en_passant = turn == WHITE ? to_sq - 8 : to_sq + 8;
       break;
     case KingCastle:
-      board.move_piece(from_sq, to_sq, King);
-      board.move_piece(to_sq + 1, to_sq - 1, Rook);
-      board.castling &= turn == WHITE ? BLACK_CASTLING : WHITE_CASTLING;
+      move_piece(from_sq, to_sq, King);
+      move_piece(to_sq + 1, to_sq - 1, Rook);
+      castling &= turn == WHITE ? BLACK_CASTLING : WHITE_CASTLING;
       break;
     case QueenCastle:
-      board.move_piece(from_sq, to_sq, King);
-      board.move_piece(to_sq - 2, to_sq + 1, Rook);
-      board.castling &= turn == WHITE ? BLACK_CASTLING : WHITE_CASTLING;
+      move_piece(from_sq, to_sq, King);
+      move_piece(to_sq - 2, to_sq + 1, Rook);
+      castling &= turn == WHITE ? BLACK_CASTLING : WHITE_CASTLING;
       break;
     case EnpassantCapture:
-      board.makeEmptySquare(1ULL << (to_sq + (BLACK == turn ? 8 : -8)), Pawn, (Color)(turn^1));
-      board.move_piece(from_sq, to_sq, Pawn);
+      undo.captured_piece = Pawn;
+      makeEmptySquare(1ULL << (to_sq + (BLACK == turn ? 8 : -8)), Pawn, (Color)(turn^1));
+      move_piece(from_sq, to_sq, Pawn);
       break;
 
     case KnightPromotionCapture:
-      board.makeEmptySquare(to_mask, board.getPieceType(to_sq), (Color)(turn ^ 1));
+      undo.captured_piece =  getPieceType(to_sq);
+      makeEmptySquare(to_mask, undo.captured_piece, (Color)(turn ^ 1));
       [[fallthrough]];
     case KnightPromotion:
-      board.makeEmptySquare(from_mask, Pawn, turn);
-      board.createPiece(to_sq, Knight);
+      makeEmptySquare(from_mask, Pawn, turn);
+      createPiece(to_sq, Knight);
       break;
 
     case QueenPromotionCapture:
-      board.makeEmptySquare(to_mask, board.getPieceType(to_sq), (Color)(turn ^ 1));
-      [[fallthrough]];
+      undo.captured_piece =  getPieceType(to_sq);
+      makeEmptySquare(to_mask, undo.captured_piece, (Color)(turn ^ 1));      [[fallthrough]];
     case QueenPromotion:
-      board.makeEmptySquare(from_mask, Pawn, turn);
-      board.createPiece(to_sq, Queen);
+      makeEmptySquare(from_mask, Pawn, turn);
+      createPiece(to_sq, Queen);
       break;
 
     case RookPromotionCapture:
-      board.makeEmptySquare(to_mask, board.getPieceType(to_sq), (Color)(turn^1));
+      undo.captured_piece =  getPieceType(to_sq);
+      makeEmptySquare(to_mask, undo.captured_piece, (Color)(turn ^ 1));
       [[fallthrough]];
     case RookPromotion:
-      board.makeEmptySquare(from_mask, Pawn, turn);
-      board.createPiece(to_sq, Rook);
+      makeEmptySquare(from_mask, Pawn, turn);
+      createPiece(to_sq, Rook);
       break;
 
     case BishopPromotionCapture:
-      board.makeEmptySquare(to_mask, board.getPieceType(to_sq), (Color)(turn^1));
+      undo.captured_piece =  getPieceType(to_sq);
+      makeEmptySquare(to_mask, undo.captured_piece, (Color)(turn ^ 1));
       [[fallthrough]];
     case BishopPromotion:
-      board.makeEmptySquare(from_mask, Pawn, turn);
-      board.createPiece(to_sq, Bishop);
+      makeEmptySquare(from_mask, Pawn, turn);
+      createPiece(to_sq, Bishop);
       break;
   }
-  board.turn = (Color)(turn ^ 1);
-  return board;
+  turn = (Color)(turn ^ 1);
+  return undo;
 }
 
 void Board::startBoard() {

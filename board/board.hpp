@@ -20,6 +20,7 @@
 
 static const int pawn_vector[] = {8, 16, 7, 9, 0};
 
+
 struct Zorbist {
   uint64_t table[64][12];
   uint64_t turn;
@@ -62,6 +63,13 @@ enum CastlingRights {
 };
 enum Color { WHITE, BLACK };
 
+struct UndoMove {
+  Move move;
+  uint8_t en_passant_sq;
+  uint8_t castling_rights;
+  PieceType captured_piece;
+};
+
 struct Board {
   uint64_t key;
   bitboard pieceTypeBB[NumPieces];
@@ -73,7 +81,8 @@ struct Board {
   inline void move_piece(int from, int to, PieceType piece);
   std::string toString();
   void startBoard();
-  Board doMove(Move move);
+  UndoMove doMove(Move move);
+  void undoMove(UndoMove move);
   Move *getMoveList(Move *move_list);
   bool inCheck();
   bitboard getKing(Color turn);
@@ -93,3 +102,5 @@ struct Board {
   bool operator!=(const Board);
 };
 Board import_fen(char *str);
+
+
