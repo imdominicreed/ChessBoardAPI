@@ -60,7 +60,7 @@ bitboard get_black_pawn_attack(bitboard pieces) {
 }
 
 bitboard Board::getKing(Color color) {
-  return colorPiecesBB[color] && pieceTypeBB[King];
+  return colorPiecesBB[color] & pieceTypeBB[King];
 }
 
 bitboard Board::getAttackBoard(Color turn) {
@@ -70,8 +70,8 @@ bitboard Board::getAttackBoard(Color turn) {
   bitboard attacks = get_king_attacks(k);
   bitboard my_pieces = colorPiecesBB[turn];
   bitboard all_pieces = colorPiecesBB[BLACK] | colorPiecesBB[WHITE];
-  attacks |= get_rooks_attack(my_pieces & pieceTypeBB[Rook], all_pieces);
-  attacks |= get_bishop_attack(my_pieces & pieceTypeBB[Bishop], all_pieces);
+  attacks |= get_rooks_attack(my_pieces & (pieceTypeBB[Queen] | pieceTypeBB[Rook]), all_pieces);
+  attacks |= get_bishop_attack(my_pieces & (pieceTypeBB[Queen] | pieceTypeBB[Bishop]), all_pieces);
   attacks |= get_knight_attack(my_pieces & pieceTypeBB[Knight]);
   if (turn == WHITE)
     attacks |= get_white_pawn_attack(my_pieces & pieceTypeBB[Pawn]);
@@ -107,7 +107,7 @@ Move *get_black_pawn_moves(bitboard pieces, bitboard opp_pieces,
   if (mask & FIRST_COLUMN) attacks = 0b100;
   if (mask & LAST_COLUMN) attacks = 0b01;
   attacks <<= src - 9;
-  attacks &= opp_pieces | en_passant;
+  attacks &= opp_pieces | (1ULL << en_passant) ;
   // Sets up movement.
   if (king & attacks) return nullptr;
   bitboard movement = mask >> 8;
@@ -127,7 +127,7 @@ Move *get_black_pawn_moves(bitboard pieces, bitboard opp_pieces,
           promote_pawn_moves(move_list, src, dst, dst_mask & opp_pieces);
     } else {
       Move move;
-      if (dst_mask == en_passant)
+      if (en_passant == dst)
         move = make_move(src, dst, EnpassantCapture);
       else
         move = make_move(src, dst, dst_mask & opp_pieces ? Capture : QuietMove);
@@ -192,7 +192,7 @@ inline Move *get_white_castling_moves(Board *board, Move *move_list,
   check_sq = 0b1100ULL | mask;
   possible_sq = 0b1110ULL;
   if ((CastlingRights::WHITE_QUEEN & board->castling) &&
-      !((check_sq & op_attacks) && !(pieces & possible_sq)))
+      !(check_sq & op_attacks) && !(pieces & possible_sq))
     *move_list++ = make_move(index, index - 2, QueenCastle);
 
   return move_list;
@@ -224,21 +224,20 @@ inline Move *get_moves(Move *move_list, bitboard attacks, int src,
   while (attacks) {
     POP_BSF(dst, attacks)
     bitboard dst_mask = 1ULL << dst;
-    (*move_list++) =
-        make_move(src, dst, pieces & dst_mask ? Capture : QuietMove);
+    *move_list++ = make_move(src, dst, pieces & dst_mask ? Capture : QuietMove);
   }
   return move_list;
 }
 
 Move *Board::getMoveList(Move *move_list) {
-  bitboard king = pieceTypeBB[King] & colorPiecesBB[turn];
+  bitboard king = pieceTypeBB[King] & colorPiecesBB[turn ^ 1];
   if (king == 0) return nullptr;
 
   bitboard all_pieces = colorPiecesBB[WHITE] | colorPiecesBB[BLACK];
   bitboard my_pieces = colorPiecesBB[turn];
 
   // bishop
-  bitboard pieces = my_pieces & pieceTypeBB[Bishop];
+  bitboard pieces = my_pieces & (pieceTypeBB[Bishop] | pieceTypeBB[Queen]);
   int src;
   while (pieces) {
     POP_BSF(src, pieces);
@@ -248,7 +247,7 @@ Move *Board::getMoveList(Move *move_list) {
   }
 
   // rooks
-  pieces = my_pieces & pieceTypeBB[Rook];
+  pieces = my_pieces & (pieceTypeBB[Rook] | pieceTypeBB[Queen]);
   while (pieces) {
     POP_BSF(src, pieces);
     bitboard mask = ~my_pieces & get_rook_board(src, all_pieces);
@@ -279,12 +278,12 @@ Move *Board::getMoveList(Move *move_list) {
   }
 
   // King
-  pieces = pieceTypeBB[King];
+  pieces = colorPiecesBB[turn] & pieceTypeBB[King];
   src = LSB(pieces);
   POP_BSF(src, pieces);
   bitboard mask = ~my_pieces & get_king_attacks(src);
   if (mask & king) return nullptr;
-  get_moves(move_list, mask, src, all_pieces);
+  move_list = get_moves(move_list, mask, src, all_pieces);
   if (turn == WHITE)
     move_list = get_white_castling_moves(this, move_list, src);
   else

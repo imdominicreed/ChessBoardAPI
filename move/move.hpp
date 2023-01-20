@@ -15,7 +15,7 @@
  */
 
 enum MoveType {
-  QuietMove = 0x1000,
+  QuietMove,
   DoublePawnPush,
   KingCastle,
   QueenCastle,
@@ -32,14 +32,14 @@ enum MoveType {
 };
 
 inline Move make_move(int from, int to, MoveType type) {
-  Move move = from;
-  move |= to << 6;
-  move |= type;
+  Move move = type;
+  move |= to << 4;
+  move |= from << 10;
   return move;
 }
-inline int from(Move m) { return m & 0b111111; }
-inline int to(Move m) { return (m >> 6) & 0b111111; }
-inline MoveType type(Move m) { return (MoveType)(m & ~0b111111111111); }
+inline int from(Move m) { return m >> 10; }
+inline int to(Move m) { return (m >> 4) & 0b111111; }
+inline MoveType type(Move m) { return (MoveType)(m & 0b1111); }
 inline std::string get_sq(int sq) {
   std::stringstream s;
   s << (char)('a' + (sq % 8));

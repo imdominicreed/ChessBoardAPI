@@ -1,7 +1,7 @@
 #include "board.hpp"
 Zorbist z;
 
-unsigned long long Zorbist::random() {
+bitboard Zorbist::random() {
   return (0xFFFFLL & rand()) | ((0xFFFFLL & rand()) << 16) |
          ((0xFFFFLL & rand()) << 32) | ((0xFFFFLL & rand()) << 48);
 }
@@ -110,7 +110,7 @@ Board import_fen(char* str) {
 inline void Board::makeEmptySquare(bitboard mask, PieceType piece,
                                    Color color) {
   pieceTypeBB[piece] &= ~mask;
-  pieceTypeBB[color] &= ~mask;
+  colorPiecesBB[color] &= ~mask;
 }
 
 void Board::updateHash(int from, Piece piece, bool color) {
@@ -120,9 +120,9 @@ void Board::updateHash(int from, Piece piece, bool color) {
 void Board::updateEnpassantHash(int src) { key ^= z.en_passant[src % 8]; }
 
 inline void Board::move_piece(int from, int to, PieceType piece) {
-  colorPiecesBB[turn] &= ~(1ULL << from);
+  colorPiecesBB[turn] ^= 1ULL << from;
   colorPiecesBB[turn] |= 1ULL << to;
-  pieceTypeBB[piece] &= ~(1ULL << from);
+  pieceTypeBB[piece] ^= 1ULL << from;
   pieceTypeBB[piece] |= 1ULL << to;
 }
 
@@ -148,7 +148,7 @@ void Board::createPiece(int sq, PieceType piece) {
 
 Board Board::doMove(Move move) {
   Board board = *this;
-  board.key ^= z.turn;
+  // board.key ^= z.turn;
   // if (board.en_passant) board.updateEnpassantHash(MSB(board.en_passant));
 
   int to_sq = to(move);
@@ -161,7 +161,7 @@ Board Board::doMove(Move move) {
 
   switch (move_type) {
     case Capture:
-      board.makeEmptySquare(to_mask, getPieceType(to_sq), (Color)~turn);
+      board.makeEmptySquare(to_mask, getPieceType(to_sq), (Color)(turn^1));
       [[fallthrough]];
     case QuietMove:
       board.move_piece(from_sq, to_sq, getPieceType(from_sq));
@@ -184,20 +184,21 @@ Board Board::doMove(Move move) {
       break;
     case KingCastle:
       board.move_piece(from_sq, to_sq, King);
-      board.move_piece(to_sq + 1, from_sq + 1, Rook);
+      board.move_piece(to_sq + 1, to_sq - 1, Rook);
+      board.castling &= turn == WHITE ? BLACK_CASTLING : WHITE_CASTLING;
       break;
     case QueenCastle:
       board.move_piece(from_sq, to_sq, King);
-      board.move_piece(to_sq - 2, from_sq - 1, Rook);
+      board.move_piece(to_sq - 2, to_sq + 1, Rook);
+      board.castling &= turn == WHITE ? BLACK_CASTLING : WHITE_CASTLING;
       break;
-
     case EnpassantCapture:
-      board.makeEmptySquare(1ULL << en_passant, Pawn, (Color)~turn);
+      board.makeEmptySquare(1ULL << (to_sq + (BLACK == turn ? 8 : -8)), Pawn, (Color)(turn^1));
       board.move_piece(from_sq, to_sq, Pawn);
       break;
 
     case KnightPromotionCapture:
-      board.makeEmptySquare(to_mask, board.getPieceType(to_sq), (Color)~turn);
+      board.makeEmptySquare(to_mask, board.getPieceType(to_sq), (Color)(turn ^ 1));
       [[fallthrough]];
     case KnightPromotion:
       board.makeEmptySquare(from_mask, Pawn, turn);
@@ -205,7 +206,7 @@ Board Board::doMove(Move move) {
       break;
 
     case QueenPromotionCapture:
-      board.makeEmptySquare(to_mask, board.getPieceType(to_sq), (Color)~turn);
+      board.makeEmptySquare(to_mask, board.getPieceType(to_sq), (Color)(turn ^ 1));
       [[fallthrough]];
     case QueenPromotion:
       board.makeEmptySquare(from_mask, Pawn, turn);
@@ -213,7 +214,7 @@ Board Board::doMove(Move move) {
       break;
 
     case RookPromotionCapture:
-      board.makeEmptySquare(to_mask, board.getPieceType(to_sq), (Color)~turn);
+      board.makeEmptySquare(to_mask, board.getPieceType(to_sq), (Color)(turn^1));
       [[fallthrough]];
     case RookPromotion:
       board.makeEmptySquare(from_mask, Pawn, turn);
@@ -221,13 +222,14 @@ Board Board::doMove(Move move) {
       break;
 
     case BishopPromotionCapture:
-      board.makeEmptySquare(to_mask, board.getPieceType(to_sq), (Color)~turn);
+      board.makeEmptySquare(to_mask, board.getPieceType(to_sq), (Color)(turn^1));
       [[fallthrough]];
     case BishopPromotion:
       board.makeEmptySquare(from_mask, Pawn, turn);
       board.createPiece(to_sq, Bishop);
       break;
   }
+  board.turn = (Color)(turn ^ 1);
   return board;
 }
 
@@ -283,7 +285,7 @@ char Board::getCharSq(int square) {
   if (mask & colorPiecesBB[WHITE]) letter -= 32;
   return letter;
 }
-bool Board::inCheck() { return getAttackBoard(turn) & getKing((Color)~turn); }
+bool Board::inCheck() { return getAttackBoard(turn) & getKing((Color)(turn^1)); }
 
 std::string Board::toString() {
   std::string s;

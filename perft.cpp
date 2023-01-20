@@ -13,11 +13,20 @@ int perft_helper(Board* board, int depth) {
 
   Move* curr = move_list;
   Move* end = board->getMoveList(move_list);
+
+  if(end != nullptr && (end < curr || ((curr +256) < end))) {
+    end = board->getMoveList(move_list);
+  }
+
   if (end == nullptr) {
     return 0;
   }
   if (depth == 0) return 1;
+  // bool test = (curr +256) < end;
+  // bool test2 = end < curr;
+  // Move* test3 = curr+256;
   while (curr != end) {
+     
     Board next = board->doMove(*curr);
     if (!next.inCheck()) nodes += perft_helper(&next, depth - 1);
     curr++;
@@ -59,10 +68,12 @@ void perftIO() {
   scanf("%s", move_str);
   scanf("%s", move_str);
   while (move_str[0] != 'g' || move_str[1] != 'o') {
+
     Move move = board.moveFromStr(move_str);
     board = board.doMove(move);
     scanf("%s", move_str);
   }
+  printf("%s\n", board.toString().c_str());
   printf("print something random then depth.\n");
   scanf("%s", move_str);
   int depth;
