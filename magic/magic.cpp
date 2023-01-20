@@ -146,7 +146,6 @@ void init_bishop_magic() {
 void init_tables() {
   init_rays();
   lookup_table_jumping_setup(KNIGHT_VECTOR, knight_mask);
-  printf("test: %llu", knight_mask[1]);
   lookup_table_jumping_setup(KING_VECTOR, king_mask);
   lookup_rook_setup();
   lookup_bishop_setup();

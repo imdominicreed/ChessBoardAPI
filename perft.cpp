@@ -3,9 +3,6 @@
 #include <time.h>
 
 #include "board/board.hpp"
-#include "magic/magic.hpp"
-#include "move/move.hpp"
-#include "move/move_gen.hpp"
 
 int perft_helper(Board* board, int depth) {
   int nodes = 0;
@@ -14,21 +11,16 @@ int perft_helper(Board* board, int depth) {
   Move* curr = move_list;
   Move* end = board->getMoveList(move_list);
 
-  if(end != nullptr && (end < curr || ((curr +256) < end))) {
-    end = board->getMoveList(move_list);
-  }
-
   if (end == nullptr) {
     return 0;
   }
   if (depth == 0) return 1;
-  // bool test = (curr +256) < end;
-  // bool test2 = end < curr;
-  // Move* test3 = curr+256;
+
   while (curr != end) {
-     
-    Board next = board->doMove(*curr);
-    if (!next.inCheck()) nodes += perft_helper(&next, depth - 1);
+    UndoMove undo = board->doMove(*curr);
+    if (!board->inCheck()) nodes += perft_helper(board, depth - 1);
+    board->undoMove(undo);
+    
     curr++;
   }
   return nodes;
@@ -40,12 +32,15 @@ int perft(Board board, int depth) {
   Move* end = board.getMoveList(move_list);
   int nodes = 0;
   while (end != start) {
-    Board pos = board.doMove(*start);
-    if (pos.inCheck()) {
+    std::string debug_move = to_string(*start);
+    UndoMove undo = board.doMove(*start);
+    if (board.inCheck()) {
+      board.undoMove(undo);
       start++;
       continue;
     }
-    int curr_nodes = perft_helper(&pos, depth);
+    int curr_nodes = perft_helper(&board, depth);
+    board.undoMove(undo);
     std::string move_str = to_string(*start);
     printf("%s", move_str.c_str());
     printf(": %d\n", curr_nodes);
@@ -70,7 +65,7 @@ void perftIO() {
   while (move_str[0] != 'g' || move_str[1] != 'o') {
 
     Move move = board.moveFromStr(move_str);
-    board = board.doMove(move);
+    board.doMove(move);
     scanf("%s", move_str);
   }
   printf("%s\n", board.toString().c_str());
