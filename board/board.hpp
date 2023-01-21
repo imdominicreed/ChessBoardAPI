@@ -22,12 +22,12 @@ static const int pawn_vector[] = {8, 16, 7, 9, 0};
 
 
 struct Zorbist {
-  uint64_t table[64][12];
-  uint64_t turn;
-  uint64_t en_passant[8];
-  uint64_t castling[16];
+  uint32_t table[64][12];
+  uint32_t turn;
+  uint32_t en_passant[8];
+  uint32_t castling[16];
 
-  bitboard random();
+  uint32_t random();
   Zorbist();
 };
 
@@ -68,10 +68,11 @@ struct UndoMove {
   uint8_t en_passant_sq;
   uint8_t castling_rights;
   PieceType captured_piece;
+  uint32_t key; 
 };
 
 struct Board {
-  uint64_t key;
+  uint32_t key;
   bitboard pieceTypeBB[NumPieces];
   bitboard colorPiecesBB[2];
   uint8_t castling;
@@ -88,13 +89,14 @@ struct Board {
   bitboard getKing(Color turn);
   bitboard getAttackBoard(Color turn);
   char getCharSq(int square);
-  void updateHash(int from, Piece piece, bool color);
-  inline void makeEmptySquare(bitboard mask, PieceType piece, Color color);
+  inline void makeEmptySquare(int sq, PieceType piece, Color color);
   void doBlackCastle(int rook_src, int rook_dst, int king_src, int king_dst);
   void doWhiteCastle(int rook_src, int rook_dst, int king_src, int king_dst);
   void removeCastle(Move move);
   Move moveFromStr(std::string move);
-  void updateMoveHash(int src, int dst, Piece piece);
+    
+  void updateHash(int sq, PieceType piece, Color color);
+  void updateMoveHash(int src, int dst, PieceType piece);
   void updateEnpassantHash(int src);
   PieceType getPieceType(int sq);
   void createPiece(int sq, PieceType piece);

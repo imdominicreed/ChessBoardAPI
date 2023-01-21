@@ -1,10 +1,26 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <vector>
+#include <utility>
 
 #include "board/board.hpp"
 
+struct Entry {
+  uint32_t key;
+  int depth;
+  int nodes;
+};
+
+int SIZE = 1<<20;
+Entry tt[1 << 20];
+
+
 int perft_helper(Board* board, int depth) {
+  auto *entry = &tt[board->key % SIZE];
+  if( entry->key == board->key && entry->depth == depth) {
+    return entry->nodes;
+  }
   int nodes = 0;
   Move move_list[256];
 
@@ -16,6 +32,7 @@ int perft_helper(Board* board, int depth) {
   }
   if (depth == 0) return 1;
 
+
   while (curr != end) {
     UndoMove undo = board->doMove(*curr);
     if (!board->inCheck()) nodes += perft_helper(board, depth - 1);
@@ -23,6 +40,9 @@ int perft_helper(Board* board, int depth) {
     
     curr++;
   }
+
+  tt[board->key % SIZE] = {board->key, depth, nodes};
+
   return nodes;
 }
 
@@ -78,9 +98,11 @@ void perftIO() {
   int nodes = perft(board, depth - 1);
   t = clock() - t;
   int nodes_per_second = (int)(nodes / ((double)t / CLOCKS_PER_SEC));
-  printf("\nn ps: %d\ntotal nodes: %d", nodes_per_second, nodes);
+  printf("\nn ps: %d\ntotal nodes: %d\n", nodes_per_second, nodes);
+  printf("total time: %f\n", ((double)t / CLOCKS_PER_SEC));
 }
 int main() {
+    for(int i = 0; i < SIZE; i++) tt[i] = {1, -1,1};
   init_tables();
   perftIO();
 }
