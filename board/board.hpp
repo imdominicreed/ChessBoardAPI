@@ -20,7 +20,6 @@
 
 static const int pawn_vector[] = {8, 16, 7, 9, 0};
 
-
 struct Zorbist {
   uint32_t table[64][12];
   uint32_t turn;
@@ -31,7 +30,16 @@ struct Zorbist {
   Zorbist();
 };
 
-enum PieceType { Pawn, Knight, Bishop, Rook, Queen, King, NumPieces = 6 };
+enum PieceType {
+  Pawn,
+  Knight,
+  Bishop,
+  Rook,
+  Queen,
+  King,
+  NumPieces = 6,
+  None,
+};
 enum Piece {
   WhitePawn,
   WhiteKnight,
@@ -68,7 +76,7 @@ struct UndoMove {
   uint8_t en_passant_sq;
   uint8_t castling_rights;
   PieceType captured_piece;
-  uint32_t key; 
+  uint32_t key;
 };
 
 struct Board {
@@ -94,7 +102,7 @@ struct Board {
   void doWhiteCastle(int rook_src, int rook_dst, int king_src, int king_dst);
   void removeCastle(Move move);
   Move moveFromStr(std::string move);
-    
+
   void updateHash(int sq, PieceType piece, Color color);
   void updateMoveHash(int src, int dst, PieceType piece);
   void updateEnpassantHash(int src);
@@ -104,5 +112,3 @@ struct Board {
   bool operator!=(const Board);
 };
 Board import_fen(char *str);
-
-

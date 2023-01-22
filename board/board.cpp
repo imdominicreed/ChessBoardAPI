@@ -101,14 +101,11 @@ Board import_fen(char* str) {
     i++;
   }
   char* en = castling + i + 1;
-  if (en[0] != '-')
-    ret.en_passant = (en[0] - 'a') + ((en[1] - '1')*8);
+  if (en[0] != '-') ret.en_passant = (en[0] - 'a') + ((en[1] - '1') * 8);
   ret.key = 0;
   return ret;
 }
-inline void Board::makeEmptySquare(int sq, PieceType piece,
-                                   Color color) {
-
+inline void Board::makeEmptySquare(int sq, PieceType piece, Color color) {
   updateHash(sq, piece, color);
   bitboard mask = 1ULL << sq;
   pieceTypeBB[piece] &= ~mask;
@@ -141,7 +138,8 @@ PieceType Board::getPieceType(int sq) {
   if (pieceTypeBB[Rook] & mask) return Rook;
   if (pieceTypeBB[Queen] & mask) return Queen;
   if (pieceTypeBB[Bishop] & mask) return Bishop;
-  return King;
+  if (pieceTypeBB[King] & mask) return King;
+  return None;
 }
 
 void Board::createPiece(int sq, PieceType piece) {
@@ -156,65 +154,66 @@ void Board::undoMove(UndoMove move) {
   int from_sq = from(move.move);
   MoveType move_type = type(move.move);
 
-  turn = (Color) (turn^1);
+  turn = (Color)(turn ^ 1);
   en_passant = move.en_passant_sq;
   castling = move.castling_rights;
 
-  if(move_type >= KnightPromotion) {
+  if (move_type >= KnightPromotion) {
     makeEmptySquare(to_sq, getPieceType(to_sq), turn);
     createPiece(from_sq, Pawn);
-  } else if(is_castle(move.move)) {
+  } else if (is_castle(move.move)) {
     move_piece(to_sq, from_sq, King);
-    move_piece(to_sq + (KingCastle == move_type ? -1 : 1), to_sq + (KingCastle == move_type ? 1 : -2), Rook);
+    move_piece(to_sq + (KingCastle == move_type ? -1 : 1),
+               to_sq + (KingCastle == move_type ? 1 : -2), Rook);
   } else {
     move_piece(to_sq, from_sq, getPieceType(to_sq));
   }
 
-  turn = (Color) (turn^1);
+  turn = (Color)(turn ^ 1);
 
-  if(is_capture(move.move)) {
-    createPiece(move_type == EnpassantCapture ? to_sq + (BLACK == turn ? -8 : 8) : to_sq , move.captured_piece);
+  if (is_capture(move.move)) {
+    createPiece(move_type == EnpassantCapture ? to_sq + (BLACK == turn ? -8 : 8)
+                                              : to_sq,
+                move.captured_piece);
   }
-    turn = (Color) (turn^1);
-    key = move.key;
-
+  turn = (Color)(turn ^ 1);
+  key = move.key;
 }
 
 UndoMove Board::doMove(Move move) {
   // move_list.push_back(to_string(move));
   UndoMove undo;
   undo.move = move;
-  undo.captured_piece = (PieceType) -1;
+  undo.captured_piece = (PieceType)-1;
   undo.castling_rights = castling;
   undo.en_passant_sq = en_passant;
   undo.key = key;
-
 
   int to_sq = to(move);
   int from_sq = from(move);
 
   MoveType move_type = type(move);
-  Color op_turn = (Color) (turn ^ 1);
+  Color op_turn = (Color)(turn ^ 1);
   // if(en_passant) key ^= z.en_passant[en_passant % 8];
   en_passant = 0;
   PieceType piece;
   int castling_before;
-  if(is_capture(move)) {
-      castling_before = castling;
-      if (to_sq == Square::A1)
-        castling &= ~WHITE_QUEEN;
-      else if (to_sq == Square::H1)
-        castling &= ~WHITE_KING;
-      else if (to_sq == Square::A8)
-        castling &= ~BLACK_QUEEN;
-      else if (to_sq == Square::H8)
-        castling &= ~BLACK_KING;
-      key ^= z.castling[~castling & castling_before]; //before 1111 after its 1100 so 0011
+  if (is_capture(move)) {
+    castling_before = castling;
+    if (to_sq == Square::A1)
+      castling &= ~WHITE_QUEEN;
+    else if (to_sq == Square::H1)
+      castling &= ~WHITE_KING;
+    else if (to_sq == Square::A8)
+      castling &= ~BLACK_QUEEN;
+    else if (to_sq == Square::H8)
+      castling &= ~BLACK_KING;
+    key ^= z.castling[~castling &
+                      castling_before];  // before 1111 after its 1100 so 0011
   }
 
   switch (move_type) {
-    case Capture:
-    {
+    case Capture: {
       PieceType capture_piece = getPieceType(to_sq);
       undo.captured_piece = capture_piece;
       makeEmptySquare(to_sq, capture_piece, op_turn);
@@ -227,14 +226,10 @@ UndoMove Board::doMove(Move move) {
       castling_before = castling;
       if (from_sq == Square::E1) castling &= ~WHITE_CASTLING;
       if (from_sq == Square::E8) castling &= ~BLACK_CASTLING;
-      if (from_sq == Square::A1)
-        castling &= ~WHITE_QUEEN;
-      if (from_sq == Square::H1)
-        castling &= ~WHITE_KING;
-      if (from_sq == Square::A8)
-        castling &= ~BLACK_QUEEN;
-      if (from_sq == Square::H8)
-        castling &= ~BLACK_KING;
+      if (from_sq == Square::A1) castling &= ~WHITE_QUEEN;
+      if (from_sq == Square::H1) castling &= ~WHITE_KING;
+      if (from_sq == Square::A8) castling &= ~BLACK_QUEEN;
+      if (from_sq == Square::H8) castling &= ~BLACK_KING;
       key ^= z.castling[~castling & castling_before];
       break;
 
@@ -255,12 +250,13 @@ UndoMove Board::doMove(Move move) {
       break;
     case EnpassantCapture:
       undo.captured_piece = Pawn;
-      makeEmptySquare(to_sq + (BLACK == turn ? 8 : -8), Pawn, (Color)(turn^1));
+      makeEmptySquare(to_sq + (BLACK == turn ? 8 : -8), Pawn,
+                      (Color)(turn ^ 1));
       move_piece(from_sq, to_sq, Pawn);
       break;
 
     case KnightPromotionCapture:
-      undo.captured_piece =  getPieceType(to_sq);
+      undo.captured_piece = getPieceType(to_sq);
       makeEmptySquare(to_sq, undo.captured_piece, (Color)(turn ^ 1));
       [[fallthrough]];
     case KnightPromotion:
@@ -269,15 +265,16 @@ UndoMove Board::doMove(Move move) {
       break;
 
     case QueenPromotionCapture:
-      undo.captured_piece =  getPieceType(to_sq);
-      makeEmptySquare(to_sq, undo.captured_piece, (Color)(turn ^ 1));      [[fallthrough]];
+      undo.captured_piece = getPieceType(to_sq);
+      makeEmptySquare(to_sq, undo.captured_piece, (Color)(turn ^ 1));
+      [[fallthrough]];
     case QueenPromotion:
       makeEmptySquare(from_sq, Pawn, turn);
       createPiece(to_sq, Queen);
       break;
 
     case RookPromotionCapture:
-      undo.captured_piece =  getPieceType(to_sq);
+      undo.captured_piece = getPieceType(to_sq);
       makeEmptySquare(to_sq, undo.captured_piece, (Color)(turn ^ 1));
       [[fallthrough]];
     case RookPromotion:
@@ -286,7 +283,7 @@ UndoMove Board::doMove(Move move) {
       break;
 
     case BishopPromotionCapture:
-      undo.captured_piece =  getPieceType(to_sq);
+      undo.captured_piece = getPieceType(to_sq);
       makeEmptySquare(to_sq, undo.captured_piece, (Color)(turn ^ 1));
       [[fallthrough]];
     case BishopPromotion:
@@ -352,7 +349,9 @@ char Board::getCharSq(int square) {
   if (mask & colorPiecesBB[WHITE]) letter -= 32;
   return letter;
 }
-bool Board::inCheck() { return getAttackBoard(turn) & getKing((Color)(turn^1)); }
+bool Board::inCheck() {
+  return getAttackBoard(turn) & getKing((Color)(turn ^ 1));
+}
 
 std::string Board::toString() {
   std::string s;
