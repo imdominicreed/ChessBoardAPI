@@ -1,8 +1,9 @@
 #include "board.hpp"
 Zorbist z;
 
-uint32_t Zorbist::random() {
-  return (0xFFFFLL & rand()) | ((0xFFFFLL & rand()) << 16);
+uint64_t Zorbist::random() {
+  return (0xFFFFLL & rand()) | ((0xFFFFLL & rand()) << 16) |
+         ((0xFFFFLL & rand()) << 32) | ((0xFFFFLL & rand()) << 48);
 }
 
 Zorbist::Zorbist() {

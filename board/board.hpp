@@ -21,12 +21,12 @@
 static const int pawn_vector[] = {8, 16, 7, 9, 0};
 
 struct Zorbist {
-  uint32_t table[64][12];
-  uint32_t turn;
-  uint32_t en_passant[8];
-  uint32_t castling[16];
+  uint64_t table[64][12];
+  uint64_t turn;
+  uint64_t en_passant[8];
+  uint64_t castling[16];
 
-  uint32_t random();
+  uint64_t random();
   Zorbist();
 };
 
@@ -76,11 +76,11 @@ struct UndoMove {
   uint8_t en_passant_sq;
   uint8_t castling_rights;
   PieceType captured_piece;
-  uint32_t key;
+  uint64_t key;
 };
 
 struct Board {
-  uint32_t key;
+  uint64_t key;
   bitboard pieceTypeBB[NumPieces];
   bitboard colorPiecesBB[2];
   uint8_t castling;
